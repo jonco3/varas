@@ -10,64 +10,65 @@ import readline
 token_pat = re.compile("\s*(?:(\d+)|(.))")
 
 def tokenize(program):
+    literal = literal_token()
+    operators = {
+        "+": operator_add_token(),
+        "-": operator_sub_token(),
+        "*": operator_mul_token(),
+        "/": operator_div_token(),
+        "^": operator_pow_token(),
+        "(": operator_lparen_token(),
+        ")": operator_rparen_token(),
+        "[": operator_lsquare_token(),
+        "]": operator_rsquare_token(),
+        ",": operator_comma_token()
+        }
+
     for number, operator in token_pat.findall(program):
         if number:
-            yield literal_token(number)
-        elif operator == "+":
-            yield operator_add_token()
-        elif operator == "-":
-            yield operator_sub_token()
-        elif operator == "*":
-            yield operator_mul_token()
-        elif operator == "/":
-            yield operator_div_token()
-        elif operator == "^":
-            yield operator_pow_token()
-        elif operator == '(':
-            yield operator_lparen_token()
-        elif operator == ')':
-            yield operator_rparen_token()
-        elif operator == '[':
-            yield operator_lsquare_token()
-        elif operator == ']':
-            yield operator_rsquare_token()
-        elif operator == ',':
-            yield operator_comma_token()
+            yield literal, number
+        elif operator in operators:
+            yield operators[operator], operator
         else:
             raise SyntaxError('unknown operator: %s', operator)
-    yield end_token()
+
+    yield end_token(), None
 
 class parser:
-    token, next = None, None
+    token, content = None, None
+    _tokenizer = None
+
+    def _next_token(self):
+        self.token, self.content = self._tokenizer()
 
     def match(self, tok = None):
         if tok and tok != type(self.token):
             raise SyntaxError('Expected %s' % tok)
-        self.token = self.next()
+        self._next_token()
 
     def opt(self, tok):
         if tok == type(self.token):
-            self.token = self.next()
+            self._next_token()
             return True
         else:
             return False
 
     def parse(self, program):
-        self.next = tokenize(program).next
-        self.token = self.next()
+        self._tokenizer = tokenize(program).next
+        self._next_token()
         result = self.expression()
         if type(self.token) != end_token:
             raise SyntaxError("Trailing input")
         return result
 
     def expression(self, bind_right = 0):
-        t = self.token
-        self.token = self.next()
-        left = t.prefix(self)
+        t, c = self.token, self.content
+        self._next_token()
+        left = t.prefix(self, c)
         while bind_right < self.token.bind_left:
-            t = self.token
-            self.token = self.next()
-            left = t.infix(self, left)
+            t, c = self.token, self.content
+            self._next_token()
+            left = t.infix(self, left, c)
         return left
 
 #class parse_error(Exception):
@@ -79,49 +80,47 @@ class parser:
 
 class token(object):
     bind_left = 0
-    def prefix(self, parser):
+    def prefix(self, parser, content):
         raise Exception("Bad prefix")
-    def infix(self, parser, left):
+    def infix(self, parser, left, content):
         raise Exception("Bad infix")
 
-class literal_token(token):
-    def __init__(self, value):
-        self.value = int(value)
-    def prefix(self, parser):
-        return self.value
+class literal_token():
+    def prefix(self, parser, content):
+        return int(content)
 
 class operator_add_token(token):
     bind_left = 10
-    def prefix(self, parser):
+    def prefix(self, parser, content):
         return parser.expression(100)
-    def infix(self, parser, left):
+    def infix(self, parser, left, content):
         right = parser.expression(10)
         return left + right
 
 class operator_sub_token(token):
     bind_left = 10
-    def prefix(self, parser):
+    def prefix(self, parser, content):
         return -parser.expression(100)
-    def infix(self, parser, left):
+    def infix(self, parser, left, content):
         return left - parser.expression(10)
 
 class operator_mul_token(token):
     bind_left = 20
-    def infix(self, parser, left):
+    def infix(self, parser, left, content):
         return left * parser.expression(20)
 
 class operator_div_token(token):
     bind_left = 20
-    def infix(self, parser, left):
+    def infix(self, parser, left, content):
         return left / parser.expression(20)
 
 class operator_pow_token(token):
     bind_left = 30
-    def infix(self, parser, left):
+    def infix(self, parser, left, content):
         return left ** parser.expression(30 - 1)
 
 class operator_lparen_token(token):
-    def prefix(self, parser):
+    def prefix(self, parser, content):
         expr = parser.expression()
         parser.match(operator_rparen_token)
         return expr
@@ -130,7 +129,7 @@ class operator_rparen_token(token):
     pass
 
 class operator_lsquare_token(token):
-    def prefix(self, parser):
+    def prefix(self, parser, content):
         result = []
         while not parser.opt(operator_rsquare_token):
             if result != []:
