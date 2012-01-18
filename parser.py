@@ -78,13 +78,13 @@ class parser:
 #        self.code = code
 
 class token(object):
+    bind_left = 0
     def prefix(self, parser):
         raise Exception("Bad prefix")
     def infix(self, parser, left):
         raise Exception("Bad infix")
 
 class literal_token(token):
-   # bind_left = 100
     def __init__(self, value):
         self.value = int(value)
     def prefix(self, parser):
@@ -121,17 +121,15 @@ class operator_pow_token(token):
         return left ** parser.expression(30 - 1)
 
 class operator_lparen_token(token):
-    bind_left = 0
     def prefix(self, parser):
         expr = parser.expression()
         parser.match(operator_rparen_token)
         return expr
 
 class operator_rparen_token(token):
-    bind_left = 0
+    pass
 
 class operator_lsquare_token(token):
-    bind_left = 0
     def prefix(self, parser):
         result = []
         while not parser.opt(operator_rsquare_token):
@@ -141,13 +139,13 @@ class operator_lsquare_token(token):
         return result
 
 class operator_rsquare_token(token):
-    bind_left = 0
+    pass
 
 class operator_comma_token(token):
-    bind_left = 0
+    pass
 
 class end_token(token):
-    bind_left = 0
+    pass
 
 # while True:
 #    program = raw_input("> ")
