@@ -175,6 +175,7 @@ class TestBlah(unittest.TestCase):
         self.check(16, " (2 + (3 - 1)) * 4")
         self.check(1, " 15 / 3 - 4")
         self.check(8, " 2 ^ 3")
+        self.check(2, " 2 ^ 1 ^ 2")
 
     def test_list(self):
         self.check([], "[]")
