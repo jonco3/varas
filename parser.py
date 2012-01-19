@@ -35,7 +35,7 @@ class Parser:
         self._tokenizer = tokenize(program).next
         self._next_token()
         result = self.expression()
-        if type(self.token) != end_token:
+        if type(self.token) != EndToken:
             raise SyntaxError("Trailing input")
         return result
 
@@ -56,6 +56,9 @@ class Token(object):
     def infix(self, parser, left, content):
         raise Exception("Bad infix")
 
+class EndToken(Token):
+    pass
+
 ################################################################################
 # Example parser
 ################################################################################
@@ -63,18 +66,18 @@ class Token(object):
 token_pat = re.compile("\s*(?:(\d+)|(.))")
 
 def tokenize(program):
-    literal = literal_token()
+    literal = LiteralToken()
     operators = {
-        "+": operator_add_token(),
-        "-": operator_sub_token(),
-        "*": operator_mul_token(),
-        "/": operator_div_token(),
-        "^": operator_pow_token(),
-        "(": operator_lparen_token(),
-        ")": operator_rparen_token(),
-        "[": operator_lsquare_token(),
-        "]": operator_rsquare_token(),
-        ",": operator_comma_token()
+        "+": OperatorAddToken(),
+        "-": OperatorSubToken(),
+        "*": OperatorMulToken(),
+        "/": OperatorDivToken(),
+        "^": OperatorPowToken(),
+        "(": OperatorLParenToken(),
+        ")": OperatorRParenToken(),
+        "[": OperatorLSquareToken(),
+        "]": OperatorRSquareToken(),
+        ",": OperatorCommaToken()
         }
 
     for number, operator in token_pat.findall(program):
@@ -85,13 +88,13 @@ def tokenize(program):
         else:
             raise SyntaxError('unknown operator: %s', operator)
 
-    yield end_token(), None
+    yield EndToken(), None
 
-class literal_token():
+class LiteralToken():
     def prefix(self, parser, content):
         return int(content)
 
-class operator_add_token(Token):
+class OperatorAddToken(Token):
     bind_left = 10
     def prefix(self, parser, content):
         return parser.expression(100)
@@ -99,53 +102,50 @@ class operator_add_token(Token):
         right = parser.expression(10)
         return left + right
 
-class operator_sub_token(Token):
+class OperatorSubToken(Token):
     bind_left = 10
     def prefix(self, parser, content):
         return -parser.expression(100)
     def infix(self, parser, left, content):
         return left - parser.expression(10)
 
-class operator_mul_token(Token):
+class OperatorMulToken(Token):
     bind_left = 20
     def infix(self, parser, left, content):
         return left * parser.expression(20)
 
-class operator_div_token(Token):
+class OperatorDivToken(Token):
     bind_left = 20
     def infix(self, parser, left, content):
         return left / parser.expression(20)
 
-class operator_pow_token(Token):
+class OperatorPowToken(Token):
     bind_left = 30
     def infix(self, parser, left, content):
         return left ** parser.expression(30 - 1)
 
-class operator_lparen_token(Token):
+class OperatorLParenToken(Token):
     def prefix(self, parser, content):
         expr = parser.expression()
-        parser.match(operator_rparen_token)
+        parser.match(OperatorRParenToken)
         return expr
 
-class operator_rparen_token(Token):
+class OperatorRParenToken(Token):
     pass
 
-class operator_lsquare_token(Token):
+class OperatorLSquareToken(Token):
     def prefix(self, parser, content):
         result = []
-        while not parser.opt(operator_rsquare_token):
+        while not parser.opt(OperatorRSquareToken):
             if result != []:
-                parser.match(operator_comma_token)
+                parser.match(OperatorCommaToken)
             result.append(parser.expression())
         return result
 
-class operator_rsquare_token(Token):
+class OperatorRSquareToken(Token):
     pass
 
-class operator_comma_token(Token):
-    pass
-
-class end_token(Token):
+class OperatorCommaToken(Token):
     pass
 
 # while True:
