@@ -7,36 +7,12 @@
 
 import re
 import sys
-import readline
 
-token_pat = re.compile("\s*(?:(\d+)|(.))")
+################################################################################
+# Library code
+################################################################################
 
-def tokenize(program):
-    literal = literal_token()
-    operators = {
-        "+": operator_add_token(),
-        "-": operator_sub_token(),
-        "*": operator_mul_token(),
-        "/": operator_div_token(),
-        "^": operator_pow_token(),
-        "(": operator_lparen_token(),
-        ")": operator_rparen_token(),
-        "[": operator_lsquare_token(),
-        "]": operator_rsquare_token(),
-        ",": operator_comma_token()
-        }
-
-    for number, operator in token_pat.findall(program):
-        if number:
-            yield literal, number
-        elif operator in operators:
-            yield operators[operator], operator
-        else:
-            raise SyntaxError('unknown operator: %s', operator)
-
-    yield end_token(), None
-
-class parser:
+class Parser:
     token, content = None, None
     _tokenizer = None
 
@@ -73,25 +49,49 @@ class parser:
             left = t.infix(self, left, c)
         return left
 
-#class parse_error(Exception):
-#    BAD_PREFIX_OP = 1
-#    BAD_INFIX_OP = 2
-#    def __init__(self, code):
-#        super(self).__init__("Parse error")
-#        self.code = code
-
-class token(object):
+class Token(object):
     bind_left = 0
     def prefix(self, parser, content):
         raise Exception("Bad prefix")
     def infix(self, parser, left, content):
         raise Exception("Bad infix")
 
+################################################################################
+# Example parser
+################################################################################
+
+token_pat = re.compile("\s*(?:(\d+)|(.))")
+
+def tokenize(program):
+    literal = literal_token()
+    operators = {
+        "+": operator_add_token(),
+        "-": operator_sub_token(),
+        "*": operator_mul_token(),
+        "/": operator_div_token(),
+        "^": operator_pow_token(),
+        "(": operator_lparen_token(),
+        ")": operator_rparen_token(),
+        "[": operator_lsquare_token(),
+        "]": operator_rsquare_token(),
+        ",": operator_comma_token()
+        }
+
+    for number, operator in token_pat.findall(program):
+        if number:
+            yield literal, number
+        elif operator in operators:
+            yield operators[operator], operator
+        else:
+            raise SyntaxError('unknown operator: %s', operator)
+
+    yield end_token(), None
+
 class literal_token():
     def prefix(self, parser, content):
         return int(content)
 
-class operator_add_token(token):
+class operator_add_token(Token):
     bind_left = 10
     def prefix(self, parser, content):
         return parser.expression(100)
@@ -99,38 +99,38 @@ class operator_add_token(token):
         right = parser.expression(10)
         return left + right
 
-class operator_sub_token(token):
+class operator_sub_token(Token):
     bind_left = 10
     def prefix(self, parser, content):
         return -parser.expression(100)
     def infix(self, parser, left, content):
         return left - parser.expression(10)
 
-class operator_mul_token(token):
+class operator_mul_token(Token):
     bind_left = 20
     def infix(self, parser, left, content):
         return left * parser.expression(20)
 
-class operator_div_token(token):
+class operator_div_token(Token):
     bind_left = 20
     def infix(self, parser, left, content):
         return left / parser.expression(20)
 
-class operator_pow_token(token):
+class operator_pow_token(Token):
     bind_left = 30
     def infix(self, parser, left, content):
         return left ** parser.expression(30 - 1)
 
-class operator_lparen_token(token):
+class operator_lparen_token(Token):
     def prefix(self, parser, content):
         expr = parser.expression()
         parser.match(operator_rparen_token)
         return expr
 
-class operator_rparen_token(token):
+class operator_rparen_token(Token):
     pass
 
-class operator_lsquare_token(token):
+class operator_lsquare_token(Token):
     def prefix(self, parser, content):
         result = []
         while not parser.opt(operator_rsquare_token):
@@ -139,13 +139,13 @@ class operator_lsquare_token(token):
             result.append(parser.expression())
         return result
 
-class operator_rsquare_token(token):
+class operator_rsquare_token(Token):
     pass
 
-class operator_comma_token(token):
+class operator_comma_token(Token):
     pass
 
-class end_token(token):
+class end_token(Token):
     pass
 
 # while True:
@@ -157,10 +157,10 @@ import unittest
 class TestBlah(unittest.TestCase):
 
     def check(self, expected, input):
-        self.assertEqual(expected, parser().parse(input))
+        self.assertEqual(expected, Parser().parse(input))
 
     def checkError(self, input):
-        self.assertRaises(Exception, lambda: parser().parse(input))
+        self.assertRaises(Exception, lambda: Parser().parse(input))
 
     def test_number(self):
         self.check(1, "1")
