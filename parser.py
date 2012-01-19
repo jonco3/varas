@@ -1,7 +1,9 @@
 #!/usr/bin/python
 
-# Top down operator precedence parser from
-# http://eli.thegreenplace.net/2010/01/02/top-down-operator-precedence-parsing/
+# Top down operator precedence parser from:
+#   http://eli.thegreenplace.net/2010/01/02/top-down-operator-precedence-parsing/
+# itself based on: 
+#   http://javascript.crockford.com/tdop/tdop.html
 
 import re
 import sys
