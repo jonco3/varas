@@ -4,8 +4,8 @@
 
 from varas import *
 from operator import *
-import re
 import sys
+import re
 
 LITERAL_TOKEN = 1
 
