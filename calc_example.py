@@ -2,9 +2,10 @@
 
 # Example parser that calculates the result of an expression
 
-import re
 from varas import *
 from operator import *
+import re
+import sys
 
 LITERAL_TOKEN = 1
 
@@ -48,13 +49,9 @@ actions.add_binary_op("^", 30, 29, pow)
 actions.add_prefix_handler("(", handle_lparen)
 actions.add_prefix_handler("[", handle_lsquare)
 
-# while True:
-#    program = raw_input("> ")
-#    print repr(parser().parse(tokenize(program)))
-
 import unittest
 
-class TestBlah(unittest.TestCase):
+class TestCalc(unittest.TestCase):
 
     def check(self, expected, input):
         self.assertEqual(expected, Parser().parse(tokenize(input), actions))
@@ -107,4 +104,14 @@ class TestBlah(unittest.TestCase):
         self.checkError("1 )")
         self.checkError("1 +")
 
-unittest.main()
+if len(sys.argv) > 1 and sys.argv[1] == "-t":
+    sys.argv.pop(1)
+    unittest.main()
+else:
+    while True:
+        try:
+            program = raw_input("> ")
+            print repr(Parser().parse(tokenize(program), actions))
+        except EOFError:
+            print("")
+            exit(0)
