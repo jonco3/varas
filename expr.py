@@ -31,8 +31,8 @@ def tokenize(program):
             raise SyntaxError('unknown operator: %s', operator)
 
     yield EndToken(), None
-
-class LiteralToken():
+    
+class LiteralToken(Token):
     def prefix(self, parser, content):
         return int(content)
 
