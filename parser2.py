@@ -3,6 +3,8 @@
 """
 Top-down operator precendence parser library.
 
+This is based on code from:  http://eli.thegreenplace.net/2010/01/02/top-down-operator-precedence-parsing/
+
 Concepts:
 
  - token type: an object representing the type of the token.
@@ -12,7 +14,8 @@ Concepts:
  - token content: the text content of the token.  Passed to prefix
    handlers so they can parse literal tokens.
 
- - action map: used to map token types to handler functions.  
+ - action map: used to map token types to handler functions called when
+   the token is encountered.
 """
         
 class ActionMap:
@@ -26,8 +29,10 @@ class ActionMap:
     def __init__(self):
         self.prefix_actions = {}
         self.infix_actions = {}
-
-    # for use by Parser
+    
+    ##################################################################
+    # Internal implementation
+    ##################################################################
 
     def prefix(self, parser, token_type, token_content):
         """
@@ -63,7 +68,9 @@ class ActionMap:
         handler_func = self.infix_actions[token_type][1]
         return handler_func(parser, self, left_value)
 
-    # low level initialisation methods for use by client
+    ##################################################################
+    # Low level initialisation methods for use by client
+    ##################################################################
 
     def add_prefix_handler(self, token_type, handler_func):
         """
@@ -72,7 +79,7 @@ class ActionMap:
 
         token_type -- the token type to be handled
 
-        handle_func -- a function called when the token is found, with
+        handler_func -- a function called when the token is found, with
         the following arguments: parser, action map, token content.
         """
         if token_type in self.prefix_actions:
@@ -88,7 +95,7 @@ class ActionMap:
 
         bind_left -- the left binding power of the token
 
-        handle_func -- a function called when the token is found,with
+        handler_func -- a function called when the token is found,with
         the following arguments: parser, action map, value of the left
         hand side of the expression.
         """
@@ -96,7 +103,9 @@ class ActionMap:
             raise Exception("Infix operator already registered for %s" % token_type)
         self.infix_actions[token_type] = (bind_left, handler_func)
 
-    # more convenient initialisation methods for use by client
+    ##################################################################
+    # More convenient initialisation methods for use by client
+    ##################################################################
 
     def add_literal(self, token_type, handler_func):
         """
@@ -165,9 +174,9 @@ class Parser():
     # tokenize generates 
     def parse(self, token_generator, actions):
         """
-        Parse a stream of tokens according to a set of actions and
-        return the result.  An exception is raised if not all tokens are
-        consumed.
+        Main interface. Parse a stream of tokens according to a set of
+        actions and return the result.  An exception is raised if not
+        all tokens are consumed.
 
         token_generator -- a generator yielding (token_type,
         token_content) tuples.
