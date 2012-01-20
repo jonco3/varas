@@ -3,7 +3,7 @@
 # Example parser that calculates the result of an expression
 
 import re
-from parser2 import *
+from varas import *
 from operator import *
 
 LITERAL_TOKEN = 1
