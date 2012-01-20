@@ -50,13 +50,21 @@ actions.add_prefix_handler("[", handle_lsquare)
 
 import unittest
 
-class TestCalc(unittest.TestCase):
+class TestExpr(unittest.TestCase):
 
     def check(self, expected, input):
         self.assertEqual(expected, Parser().parse(tokenize(input), actions))
 
     def checkError(self, input):
         self.assertRaises(Exception, lambda: Parser().parse(tokenize(input), actions))
+
+    def test_(self):
+        self.check(1, "1")
+        self.check(1, "(1)")
+        self.check(("add", 1, 2), "1+2")
+        self.check(("add", 1, ("mul", 2, 3)), "1+2*3")
+        self.check(("mul", 1, ("add", 2, 3)), "1*(2+3)")
+        self.check(("list", [1, 2, 3]), "[1, 2, 3]")
 
 if len(sys.argv) > 1 and sys.argv[1] == "-t":
     sys.argv.pop(1)
