@@ -29,7 +29,7 @@ def handle_lparen(parser, actions, content):
 def handle_lsquare(parser, actions, content):
     result = []
     while not parser.opt("]"):
-        if result != []:
+        if result:
             parser.match(",")
         result.append(parser.expression(actions))
     return result
