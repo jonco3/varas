@@ -197,16 +197,17 @@ class Parser():
 
     def opt(self, tok):
         """
-        Call from token handlers to optionally consume one token from the input stream.  
+        Call from token handlers to optionally consume one token from the input stream.
 
         tok -- the token type to match
 
-        Return whether a token was consumed.
+        Return the token content or None if it was not matched.
         """
         if self.token != tok:
-            return False
+            return None
+        result = self.content
         self.next_token()
-        return True
+        return result
 
     def match(self, tok):
         """
@@ -214,10 +215,12 @@ class Parser():
 
         tok -- the token type to match
 
-        Raises an exception if the token was not matched.
+        Returns the token conent or raises an exception if the token was not matched.
         """
-        if not self.opt(tok):
+        result = self.opt(tok)
+        if not result:
             raise SyntaxError('Expected %s' % tok)
+        return result
 
     def expression(self, actions, bind_right = 0):
         """
