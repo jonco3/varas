@@ -12,8 +12,10 @@ Concepts:
    Paser.END_TOKEN is a special token type representing the end of the
    input stream.
 
- - token content: the text content of the token.  Passed to prefix
-   handlers so they can parse literal tokens.
+ - token: a tuple of (token_type, token_content, token_position).
+   token_conent is the text content of the token, and token_position can
+   be any information supplied by the tokeniser for use in error
+   messages.
 
  - action map: used to map token types to handler functions called when
    the token is encountered.
@@ -46,37 +48,40 @@ class ActionMap:
     # Internal implementation
     ##################################################################
 
-    def prefix(self, parser, token_type, token_content):
+    def prefix(self, parser, token):
         """
         Internal - called by the parser when a token is encountered in
         prefix position.  This either calls the appropriate handler, or
         raises an exception if no handler is registered for the token
         type.
         """
+        token_type = token[0]
         if token_type not in self.prefix_actions:
-            raise ParseException(token_type, "Bad prefix operator in this context") # todo token
+            raise ParseException(token, "Bad prefix operator in this context")
         handler = self.prefix_actions[token_type]
-        return handler(parser, self, token_content)
+        return handler(parser, self, token)
 
-    def get_bind_left(self, token_type):
+    def get_bind_left(self, token):
         """
         Internal - called by the parser to get the left binding power
         for a token type.  Returns the binding power, or zero if the
         token type is not registered.
         """
+        token_type = token[0]
         if token_type not in self.infix_actions:
             return 0
         return self.infix_actions[token_type][0]
 
-    def infix(self, parser, token_type, token_content, left_value):
+    def infix(self, parser, token, left_value):
         """
         Internal - called by the parser when a token is encountered in
         infix position.  This either calls the appropriate handler, or
         raises an exception if no handler is registered for the token
         type.
         """
+        token_type = token[0]
         if token_type not in self.infix_actions:
-            raise ParseException(token_type, "Bad infix operator in this context") # todo token
+            raise ParseException(token, "Bad infix operator in this context")
         handler_func = self.infix_actions[token_type][1]
         return handler_func(parser, self, left_value)
 
@@ -128,7 +133,9 @@ class ActionMap:
         handler_func -- a function to called with content of the token
         that returns the literal value.
         """
-        self.add_prefix_handler(token_type, lambda p, a, c: handler_func(c))
+        def literal_handler(parser, actions, token):
+            return handler_func(token[1])
+        self.add_prefix_handler(token_type, literal_handler)
 
     def add_binary_op(self, token_type, bind_left, assoc, handler_func):
         """
@@ -158,7 +165,7 @@ class ActionMap:
         right hand side of the expression that returns the value of the
         whole expression.
         """
-        def unary_handler(parser, actions, token_content):
+        def unary_handler(parser, actions, token):
             right_value = parser.expression(self, 100)
             return handler_func(right_value)
         self.add_prefix_handler(token_type, unary_handler)
@@ -177,12 +184,12 @@ class Parser:
     # Internal implementation
     ##################################################################
 
-    token, content = None, None
+    token = None
     token_generator = None
 
     def next_token(self):
         """Interal - consume a token from the input stream"""
-        self.token, self.content = self.token_generator.next()
+        self.token = self.token_generator.next()
 
     ##################################################################
     # Public interface
@@ -198,8 +205,8 @@ class Parser:
         actions and return the result.  An exception is raised if not
         all tokens are consumed.
 
-        token_generator -- a generator yielding (token_type,
-        token_content) tuples.
+        token_generator -- a generator yielding tokens, i.e. (token_type,
+        token_content, token_position) tuples.
 
         actions -- an ActionMap used to determine what action to take
         when encountering each token.
@@ -207,7 +214,7 @@ class Parser:
         self.token_generator = token_generator
         self.next_token()
         result = self.expression(actions)
-        if self.token != Parser.END_TOKEN:
+        if self.token[0] != Parser.END_TOKEN:
             raise ParseException(self.token, "Trailing input")
         return result
 
@@ -223,9 +230,9 @@ class Parser:
 
         Return the token content or None if it was not matched.
         """
-        if self.token != tok:
+        if self.token[0] != tok:
             return None
-        result = self.content
+        result = self.token
         self.next_token()
         return result
 
@@ -252,11 +259,11 @@ class Parser:
 
         Returns the value of the expression.
         """
-        t, c = self.token, self.content
+        t = self.token
         self.next_token()
-        left = actions.prefix(self, t, c)
+        left = actions.prefix(self, t)
         while bind_right < actions.get_bind_left(self.token):
-            t, c = self.token, self.content
+            t = self.token
             self.next_token()
-            left = actions.infix(self, t, c, left)
+            left = actions.infix(self, t, left)
         return left
