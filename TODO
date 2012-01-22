@@ -2,7 +2,6 @@ Make tokens tuples of (type, content, line, column)
 Add positions in error messages
 Add parser exception class
 Convenience methods to handle parens and sequences
-Remove right_bind from interface in favour of Assoc LEFT and RIGHT
 Upload to github
 Add more complex examples
 Directory structure and install script

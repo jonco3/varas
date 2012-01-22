@@ -3,7 +3,8 @@
 """
 Top-down operator precendence parser library.
 
-This is based on code from:  http://eli.thegreenplace.net/2010/01/02/top-down-operator-precedence-parsing/
+This is based on code from:
+http://eli.thegreenplace.net/2010/01/02/top-down-operator-precedence-parsing/
 
 Concepts:
 
@@ -17,6 +18,17 @@ Concepts:
  - action map: used to map token types to handler functions called when
    the token is encountered.
 """
+
+class Assoc:
+    """
+    Defines constants for left/right associative binary oprators, used
+    by ActionMap.add_binary_op().
+
+    The values are added to double the operator precedence value to
+    obtain the final right binding power - do not change the values.
+    """
+    LEFT = 0
+    RIGHT = -1
         
 class ActionMap:
     """
@@ -98,10 +110,12 @@ class ActionMap:
         handler_func -- a function called when the token is found,with
         the following arguments: parser, action map, value of the left
         hand side of the expression.
+
+        Note bind_left is doubled by this method before it is stored.
         """
         if token_type in self.infix_actions:
             raise Exception("Infix operator already registered for %s" % token_type)
-        self.infix_actions[token_type] = (bind_left, handler_func)
+        self.infix_actions[token_type] = (bind_left * 2, handler_func)
 
     ##################################################################
     # More convenient initialisation methods for use by client
@@ -118,7 +132,7 @@ class ActionMap:
         """
         self.add_prefix_handler(token_type, lambda p, a, c: handler_func(c))
 
-    def add_binary_op(self, token_type, bind_left, bind_right, handler_func):
+    def add_binary_op(self, token_type, bind_left, assoc, handler_func):
         """
         Add a handler for a binary operator.
 
@@ -128,6 +142,9 @@ class ActionMap:
         left and right subexpressions that returns the value of the
         whole expression.
         """
+        # calculate right binding power from left and associativity
+        # bind_left is doubled by add_infix_handler()
+        bind_right = bind_left * 2 + assoc
         def binary_handler(parser, actions, left_value):
             right_value = parser.expression(self, bind_right)
             return handler_func(left_value, right_value)
