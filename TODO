@@ -1,4 +1,3 @@
-Check correct exception raised in error
 Add positions in error messages
 Convenience methods to handle parens and sequences
 Upload to github

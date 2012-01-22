@@ -57,7 +57,7 @@ class TestCalc(unittest.TestCase):
         self.assertEqual(expected, Parser().parse(tokenize(input), actions))
 
     def checkError(self, input):
-        self.assertRaises(Exception, lambda: Parser().parse(tokenize(input), actions))
+        self.assertRaises(ParseException, lambda: Parser().parse(tokenize(input), actions))
 
     def test_number(self):
         self.check(1, "1")

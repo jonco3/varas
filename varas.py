@@ -171,9 +171,9 @@ class ActionMap:
         self.add_prefix_handler(token_type, unary_handler)
 
 class ParseException(Exception):
-    def __init__(token, message):
+    def __init__(self, token, message):
         self.token = token
-        Exception.__init__(message)
+        Exception.__init__(self, message)
 
 class Parser:
     """
@@ -189,7 +189,10 @@ class Parser:
 
     def next_token(self):
         """Interal - consume a token from the input stream"""
-        self.token = self.token_generator.next()
+        try:
+            self.token = self.token_generator.next()
+        except StopIteration:
+            raise ParseException(None, "Unexpected end of input")
 
     ##################################################################
     # Public interface

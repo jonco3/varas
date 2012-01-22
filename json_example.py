@@ -79,7 +79,7 @@ class TestJson(unittest.TestCase):
         self.assertEqual(expected, Parser().parse(tokenize(input), json))
 
     def checkError(self, input):
-        self.assertRaises(Exception, lambda: Parser().parse(tokenize(input), json))
+        self.assertRaises(ParseException, lambda: Parser().parse(tokenize(input), json))
 
     def test_string(self):
         self.check("", '""')
