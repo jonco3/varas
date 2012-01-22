@@ -1,6 +1,5 @@
 Make tokens tuples of (type, content, line, column)
 Add positions in error messages
-Add parser exception class
 Convenience methods to handle parens and sequences
 Upload to github
 Add more complex examples

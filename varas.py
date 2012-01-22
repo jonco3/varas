@@ -54,7 +54,7 @@ class ActionMap:
         type.
         """
         if token_type not in self.prefix_actions:
-            raise Exception("%s not allowed as prefix in this context" % token_type)
+            raise ParseException(token_type, "Bad prefix operator in this context") # todo token
         handler = self.prefix_actions[token_type]
         return handler(parser, self, token_content)
 
@@ -76,7 +76,7 @@ class ActionMap:
         type.
         """
         if token_type not in self.infix_actions:
-            raise Exception("%s not defined as infix in this context" % token_type)
+            raise ParseException(token_type, "Bad infix operator in this context") # todo token
         handler_func = self.infix_actions[token_type][1]
         return handler_func(parser, self, left_value)
 
@@ -94,8 +94,7 @@ class ActionMap:
         handler_func -- a function called when the token is found, with
         the following arguments: parser, action map, token content.
         """
-        if token_type in self.prefix_actions:
-            raise Exception("Prefix operator already registered for %s" % token_type)
+        assert token_type not in self.prefix_actions
         self.prefix_actions[token_type] = handler_func
 
     def add_infix_handler(self, token_type, bind_left, handler_func):
@@ -113,8 +112,7 @@ class ActionMap:
 
         Note bind_left is doubled by this method before it is stored.
         """
-        if token_type in self.infix_actions:
-            raise Exception("Infix operator already registered for %s" % token_type)
+        assert token_type not in self.infix_actions
         self.infix_actions[token_type] = (bind_left * 2, handler_func)
 
     ##################################################################
@@ -165,7 +163,12 @@ class ActionMap:
             return handler_func(right_value)
         self.add_prefix_handler(token_type, unary_handler)
 
-class Parser():
+class ParseException(Exception):
+    def __init__(token, message):
+        self.token = token
+        Exception.__init__(message)
+
+class Parser:
     """
     Top down operator precedence parser.
     """
@@ -205,7 +208,7 @@ class Parser():
         self.next_token()
         result = self.expression(actions)
         if self.token != Parser.END_TOKEN:
-            raise SyntaxError("Trailing input")
+            raise ParseException(self.token, "Trailing input")
         return result
 
     ##################################################################
@@ -236,7 +239,7 @@ class Parser():
         """
         result = self.opt(tok)
         if not result:
-            raise SyntaxError('Expected %s' % tok)
+            raise ParseException(self.token, 'Expected %s' % tok)
         return result
 
     def expression(self, actions, bind_right = 0):
