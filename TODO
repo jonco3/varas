@@ -1,7 +1,6 @@
 Add positions in error messages
 Convenience methods to handle parens and sequences
 Upload to github
-Add more complex examples
 Directory structure and install script
 Rename ActionMap - ExpressionSpec? MatchSpec?
 Reinstate simple tokeniser for example code

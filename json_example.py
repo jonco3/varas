@@ -33,8 +33,16 @@ def tokenize(text):
             yield m.group(3), m.group(3)        
     yield Parser.END_TOKEN, ""    
 
+def unescape_backslash(match):
+    s = match.group(0)
+    if s == "\\/":
+        return "/"
+    else:
+        # lazy, exmaple code only!
+        return eval('"' + s + '"')
+
 def handle_string(s):
-    return s[1:-1] # todo unescape
+    return re.sub(r"\\((u....)|.)", unescape_backslash, s[1:-1])
 
 def handle_number(s):
     if "." in s: 
@@ -46,9 +54,8 @@ def handle_object(parser, actions, content):
     result = {}
     while not parser.opt("}"):
         if len(result):
-            print("handle_object %s\n" % repr(result))
             parser.match(",")
-        key = handle_string(parser.match(LITERAL_STRING_TOKEN))
+        key = handle_string(parser.match(LITERAL_STRING_TOKEN)[1])
         parser.match(":")
         value = parser.expression(actions)
         result[key] = value
@@ -67,9 +74,9 @@ json.add_literal(LITERAL_STRING_TOKEN, handle_string)
 json.add_literal(LITERAL_NUMBER_TOKEN, handle_number) 
 json.add_prefix_handler("{", handle_object)
 json.add_prefix_handler("[", handle_array)
-json.add_literal("true", lambda s: True)
-json.add_literal("false", lambda s: False)
-json.add_literal("null", lambda s: None)
+json.add_literal("true", lambda t: True)
+json.add_literal("false", lambda t: False)
+json.add_literal("null", lambda t: None)
 
 import unittest
 
@@ -84,10 +91,10 @@ class TestJson(unittest.TestCase):
     def test_string(self):
         self.check("", '""')
         self.check("foo", '"foo"')
-        #self.check("fo\"o", r'"fo\"o"') todo: unescape
-        self.checkError('"foo')
-        self.checkError('foo"')
-        self.checkError('"fo"o"')
+        self.check("\"", r'"\""')
+        self.check("\\", r'"\\"')
+        self.check("/", r'"\/"')  # todo: check JSON escaped quote
+        self.check("\b\f\n\r\t", '"\\b\\f\\n\\r\\t"')
 
     def test_number(self):
         self.check(1, "1")
@@ -102,7 +109,8 @@ class TestJson(unittest.TestCase):
                 "width":      1920, 
                 "height":     1080, 
                 "interlace":  false, 
-                "frame rate": 24
+                "frame rate": 24,
+                "floating":   2.5
             }
         }'''
 
@@ -113,11 +121,11 @@ class TestJson(unittest.TestCase):
                 "width":      1920, 
                 "height":     1080, 
                 "interlace":  False, 
-                "frame rate": 24
+                "frame rate": 24,
+                "floating":   2.5
                 }
             }
         self.check(expected, source)
-
 
 if len(sys.argv) > 1 and sys.argv[1] == "-t":
     sys.argv.pop(1)
