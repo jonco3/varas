@@ -7,5 +7,5 @@ setup(name = 'Varas',
       description = 'Pratt parser framework',
       author = 'Jon Coppeard',
       author_email = 'jon@coppeard.net',
-      py_modules = [ 'src/varas' ],
+      py_modules = [ 'varas' ],
      )
