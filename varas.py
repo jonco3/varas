@@ -59,7 +59,7 @@ class ActionMap:
         if token_type not in self.prefix_actions:
             raise ParseException(token, "Bad prefix operator in this context")
         handler = self.prefix_actions[token_type]
-        return handler(parser, self, token)
+        return handler(parser, token)
 
     def get_bind_left(self, token):
         """
@@ -83,7 +83,7 @@ class ActionMap:
         if token_type not in self.infix_actions:
             raise ParseException(token, "Bad infix operator in this context")
         handler_func = self.infix_actions[token_type][1]
-        return handler_func(parser, self, left_value)
+        return handler_func(parser, left_value)
 
     ##################################################################
     # Low level initialisation methods for use by client
@@ -97,7 +97,7 @@ class ActionMap:
         token_type -- the token type to be handled
 
         handler_func -- a function called when the token is found, with
-        the following arguments: parser, action map, token content.
+        the following arguments: parser, token content.
         """
         assert token_type not in self.prefix_actions
         self.prefix_actions[token_type] = handler_func
@@ -112,8 +112,8 @@ class ActionMap:
         bind_left -- the left binding power of the token
 
         handler_func -- a function called when the token is found,with
-        the following arguments: parser, action map, value of the left
-        hand side of the expression.
+        the following arguments: parser, value of the left hand side of
+        the expression.
 
         Note bind_left is doubled by this method before it is stored.
         """
@@ -133,7 +133,7 @@ class ActionMap:
         handler_func -- a function to called with content of the token
         that returns the literal value.
         """
-        def literal_handler(parser, actions, token):
+        def literal_handler(parser, token):
             return handler_func(token[1])
         self.add_prefix_handler(token_type, literal_handler)
 
@@ -150,8 +150,8 @@ class ActionMap:
         # calculate right binding power from left and associativity
         # bind_left is doubled by add_infix_handler()
         bind_right = bind_left * 2 + assoc
-        def binary_handler(parser, actions, left_value):
-            right_value = parser.expression(self, bind_right)
+        def binary_handler(parser, left_value):
+            right_value = parser.expression(bind_right)
             return handler_func(left_value, right_value)
         self.add_infix_handler(token_type, bind_left, binary_handler)
     
@@ -165,8 +165,8 @@ class ActionMap:
         right hand side of the expression that returns the value of the
         whole expression.
         """
-        def unary_handler(parser, actions, token):
-            right_value = parser.expression(self, 100)
+        def unary_handler(parser, token):
+            right_value = parser.expression(100)
             return handler_func(right_value)
         self.add_prefix_handler(token_type, unary_handler)
 
@@ -184,6 +184,7 @@ class Parser:
     # Internal implementation
     ##################################################################
 
+    actions = None
     token = None
     token_generator = None
 
@@ -214,9 +215,10 @@ class Parser:
         actions -- an ActionMap used to determine what action to take
         when encountering each token.
         """
+        self.actions = actions
         self.token_generator = token_generator
         self.next_token()
-        result = self.expression(actions)
+        result = self.expression()
         if self.token[0] != Parser.END_TOKEN:
             raise ParseException(self.token, "Trailing input")
         return result
@@ -252,11 +254,9 @@ class Parser:
             raise ParseException(self.token, 'Expected %s' % tok)
         return result
 
-    def expression(self, actions, bind_right = 0):
+    def expression(self, bind_right = 0):
         """
         Call from token handlers to parse an expression from the input stream.
-
-        actions -- action map to use
 
         bind_right -- right binding power used to resolve operator precedence
 
@@ -264,9 +264,9 @@ class Parser:
         """
         t = self.token
         self.next_token()
-        left = actions.prefix(self, t)
-        while bind_right < actions.get_bind_left(self.token):
+        left = self.actions.prefix(self, t)
+        while bind_right < self.actions.get_bind_left(self.token):
             t = self.token
             self.next_token()
-            left = actions.infix(self, t, left)
+            left = self.actions.infix(self, t, left)
         return left
