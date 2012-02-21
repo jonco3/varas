@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PYTHONPATH=src
+export PYTHONPATH=.
 python test/calc_example.py -t
 python test/expr_example.py -t
 python test/json_example.py -t

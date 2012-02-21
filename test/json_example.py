@@ -50,23 +50,23 @@ def handle_number(s):
     else: 
         return int(s)
 
-def handle_object(parser, actions, content):
+def handle_object(parser, content):
     result = {}
     while not parser.opt("}"):
         if len(result):
             parser.match(",")
         key = handle_string(parser.match(LITERAL_STRING_TOKEN)[1])
         parser.match(":")
-        value = parser.expression(actions)
+        value = parser.expression()
         result[key] = value
     return result
 
-def handle_array(parser, actions, content):
+def handle_array(parser, content):
     result = []
     while not parser.opt("]"):
         if result:
             parser.match(",")
-        result.append(parser.expression(actions))
+        result.append(parser.expression())
     return result
 
 json = ActionMap()
