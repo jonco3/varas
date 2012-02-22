@@ -26,8 +26,8 @@ class Assoc:
     Defines constants for left/right associative binary oprators, used
     by ActionMap.add_binary_op().
 
-    The values are added to double the operator precedence value to
-    obtain the final right binding power - do not change the values.
+    The values are added to the operator precedence value to obtain the
+    final right binding power - do not change the values.
     """
     LEFT = 0
     RIGHT = -1
@@ -109,16 +109,16 @@ class ActionMap:
 
         token_type -- the token type to be handled
 
-        bind_left -- the left binding power of the token
+        bind_left -- the left binding power of the token, must be a
+        multiple of two
 
         handler_func -- a function called when the token is found,with
         the following arguments: parser, value of the left hand side of
         the expression.
-
-        Note bind_left is doubled by this method before it is stored.
         """
         assert token_type not in self.infix_actions
-        self.infix_actions[token_type] = (bind_left * 2, handler_func)
+        assert bind_left % 2 == 0
+        self.infix_actions[token_type] = (bind_left, handler_func)
 
     ##################################################################
     # More convenient initialisation methods for use by client
@@ -143,13 +143,20 @@ class ActionMap:
 
         token_type -- the token type to be handled
 
+        bind_left -- the left binding power of the token, must be a
+        multiple of two
+
+        assoc -- the associativity of the opeator, one of Assoc.LEFT or
+        Assoc.RIGHT
+
         handler_func -- a function that is called with the values of the
         left and right subexpressions that returns the value of the
         whole expression.
         """
-        # calculate right binding power from left and associativity
-        # bind_left is doubled by add_infix_handler()
-        bind_right = bind_left * 2 + assoc
+        # calculate right binding power by addng left binding power and
+        # associativity, hence why left binding power must be a multiple
+        # of two
+        bind_right = bind_left + assoc
         def binary_handler(parser, left_value):
             right_value = parser.expression(bind_right)
             return handler_func(left_value, right_value)
