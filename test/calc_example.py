@@ -62,11 +62,6 @@ class TestCalc(unittest.TestCase):
                           list,
                           Parser(tokenize(input)).parse(actions))
 
-    def checkCount(self, expected, input):
-        self.assertEqual(expected, 
-                         len(list(Parser(tokenize(input)).parse(actions))))
-
-
     def test_number(self):
         self.check(1, "1")
         self.check(2, " 2")
@@ -110,7 +105,14 @@ class TestCalc(unittest.TestCase):
         self.checkError("1 )")
         self.checkError("1 +")
 
-    def test_count(self):
+    def checkCount(self, expected, input):
+        p = Parser(tokenize(input))
+        for i in range(expected):
+            self.assertFalse(p.at_end())
+            e = p.expression(actions)
+        self.assertTrue(p.at_end())
+
+    def test_multiple(self):
         self.checkCount(1, "1")
         self.checkCount(2, "1 2 * 3")
 

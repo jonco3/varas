@@ -219,6 +219,12 @@ class Parser:
         self.token_generator = token_generator
         self.next_token()
 
+    def at_end(self):
+        """
+        Return whether the parser is at the end of the input stream
+        """
+        return self.token[0] == Parser.END_TOKEN
+
     def parse(self, actions):
         """
         A generator that parse a stream of tokens
@@ -228,7 +234,7 @@ class Parser:
         actions -- an ActionMap used to determine what action to take
         when encountering each token.
         """
-        while self.token[0] != Parser.END_TOKEN:
+        while not self.at_end():
             yield self.expression(actions)
 
     ##################################################################
