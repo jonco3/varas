@@ -12,10 +12,8 @@ Concepts:
    Paser.END_TOKEN is a special token type representing the end of the
    input stream.
 
- - token: a tuple of (token_type, token_content, token_position).
-   token_conent is the text content of the token, and token_position can
-   be any information supplied by the tokeniser for use in error
-   messages.
+ - token: a tuple of (token_type, token_content, token_line,
+   token_column).  token_conent is the text content of the token.
 
  - action map: used to map token types to handler functions called when
    the token is encountered.
@@ -180,7 +178,10 @@ class ActionMap:
 class ParseException(Exception):
     def __init__(self, token, message):
         self.token = token
-        Exception.__init__(self, message)
+        self.message = message
+
+    def __str__(self):
+        return "%s at line %d column %d" % (self.message, self.token[2], self.token[3])
 
 class Parser:
     """
