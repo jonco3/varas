@@ -83,10 +83,13 @@ import unittest
 class TestJson(unittest.TestCase):
 
     def check(self, expected, input):
-        self.assertEqual(expected, Parser().parse(tokenize(input), json))
+        self.assertEqual([expected], 
+                         list(Parser().parse(tokenize(input), json)))
 
     def checkError(self, input):
-        self.assertRaises(ParseException, lambda: Parser().parse(tokenize(input), json))
+        self.assertRaises(ParseException, 
+                          lambda: list(Parser().parse(tokenize(input), 
+                                                      json)))
 
     def test_string(self):
         self.check("", '""')
@@ -134,7 +137,7 @@ else:
     while True:
         try:
             program = raw_input("> ")
-            print repr(Parser().parse(tokenize(program), actions))
+            print repr(Parser().parse(tokenize(program), json).next())
         except EOFError:
             print("")
             exit(0)

@@ -209,12 +209,11 @@ class Parser:
     """Token type representing the end of the token stream"""
     END_TOKEN = -1
 
-    # tokenize generates 
     def parse(self, token_generator, actions):
         """
-        Main interface. Parse a stream of tokens according to a set of
-        actions and return the result.  An exception is raised if not
-        all tokens are consumed.
+        Main interface. A generator that parse a stream of tokens
+        according to a set of actions and yields the results.  Multiple
+        expressions are parsed until all tokens are consumed.
 
         token_generator -- a generator yielding tokens, i.e. (token_type,
         token_content, token_position) tuples.
@@ -225,10 +224,8 @@ class Parser:
         self.actions = actions
         self.token_generator = token_generator
         self.next_token()
-        result = self.expression()
-        if self.token[0] != Parser.END_TOKEN:
-            raise ParseException(self.token, "Trailing input")
-        return result
+        while self.token[0] != Parser.END_TOKEN:
+            yield self.expression()
 
     ##################################################################
     # Token handler interface

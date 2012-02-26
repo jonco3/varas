@@ -1,4 +1,4 @@
-##!/usr/bin/python
+#!/usr/bin/python
 
 # Example parser that generates an AST for an expression
 
@@ -53,7 +53,8 @@ import unittest
 class TestExpr(unittest.TestCase):
 
     def check(self, expected, input):
-        self.assertEqual(expected, Parser().parse(tokenize(input), actions))
+        self.assertEqual([expected], 
+                         list(Parser().parse(tokenize(input), actions)))
 
     def checkError(self, input):
         self.assertRaises(ParseException, lambda: Parser().parse(tokenize(input), actions))
@@ -73,7 +74,7 @@ else:
     while True:
         try:
             program = raw_input("> ")
-            print repr(Parser().parse(tokenize(program), actions))
+            print repr(Parser().parse(tokenize(program), actions).next())
         except EOFError:
             print("")
             exit(0)

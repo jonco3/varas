@@ -54,10 +54,19 @@ import unittest
 class TestCalc(unittest.TestCase):
 
     def check(self, expected, input):
-        self.assertEqual(expected, Parser().parse(tokenize(input), actions))
+        self.assertEqual([expected], 
+                         list(Parser().parse(tokenize(input), actions)))
 
     def checkError(self, input):
-        self.assertRaises(ParseException, lambda: Parser().parse(tokenize(input), actions))
+        self.assertRaises(ParseException, 
+                          list,
+                          Parser().parse(tokenize(input), actions))
+
+    def checkCount(self, expected, input):
+        self.assertEqual(expected, 
+                         len(list(Parser().parse(tokenize(input), 
+                                                 actions))))
+
 
     def test_number(self):
         self.check(1, "1")
@@ -96,13 +105,15 @@ class TestCalc(unittest.TestCase):
         self.checkError(" ^ 3")
         self.checkError("2 ^")
         self.checkError("1 * * 2")
-        self.checkError("1 * * 2")
-        self.checkError("1 1")
         self.checkError("( 1")
         self.checkError(") 1")
         self.checkError("1 (")
         self.checkError("1 )")
         self.checkError("1 +")
+
+    def test_count(self):
+        self.checkCount(1, "1")
+        self.checkCount(2, "1 2 * 3")
 
 if len(sys.argv) > 1 and sys.argv[1] == "-t":
     sys.argv.pop(1)
@@ -111,7 +122,7 @@ else:
     while True:
         try:
             program = raw_input("> ")
-            print repr(Parser().parse(tokenize(program), actions))
+            print repr(Parser().parse(tokenize(program), actions).next())
         except EOFError:
             print("")
             exit(0)
