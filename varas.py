@@ -210,21 +210,26 @@ class Parser:
     """Token type representing the end of the token stream"""
     END_TOKEN = -1
 
-    def parse(self, token_generator, actions):
+    def __init__(self, token_generator):
         """
-        Main interface. A generator that parse a stream of tokens
-        according to a set of actions and yields the results.  Multiple
-        expressions are parsed until all tokens are consumed.
+        Create a parser object.
 
         token_generator -- a generator yielding tokens, i.e. (token_type,
-        token_content, token_position) tuples.
+        token_content, token_line, token_column) tuples.
+        """
+        self.token_generator = token_generator
+        self.next_token()
+
+    def parse(self, actions):
+        """
+        A generator that parse a stream of tokens
+        according to a set of actions and yields the results.  Multiple
+        expressions are parsed until all tokens are consumed.
 
         actions -- an ActionMap used to determine what action to take
         when encountering each token.
         """
         self.actions = actions
-        self.token_generator = token_generator
-        self.next_token()
         while self.token[0] != Parser.END_TOKEN:
             yield self.expression()
 

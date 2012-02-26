@@ -55,17 +55,16 @@ class TestCalc(unittest.TestCase):
 
     def check(self, expected, input):
         self.assertEqual([expected], 
-                         list(Parser().parse(tokenize(input), actions)))
+                         list(Parser(tokenize(input)).parse(actions)))
 
     def checkError(self, input):
         self.assertRaises(ParseException, 
                           list,
-                          Parser().parse(tokenize(input), actions))
+                          Parser(tokenize(input)).parse(actions))
 
     def checkCount(self, expected, input):
         self.assertEqual(expected, 
-                         len(list(Parser().parse(tokenize(input), 
-                                                 actions))))
+                         len(list(Parser(tokenize(input)).parse(actions))))
 
 
     def test_number(self):
@@ -122,7 +121,7 @@ else:
     while True:
         try:
             program = raw_input("> ")
-            print repr(Parser().parse(tokenize(program), actions).next())
+            print repr(Parser(tokenize(program)).parse(actions).next())
         except EOFError:
             print("")
             exit(0)

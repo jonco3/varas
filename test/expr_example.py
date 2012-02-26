@@ -54,10 +54,10 @@ class TestExpr(unittest.TestCase):
 
     def check(self, expected, input):
         self.assertEqual([expected], 
-                         list(Parser().parse(tokenize(input), actions)))
+                         list(Parser(tokenize(input)).parse(actions)))
 
     def checkError(self, input):
-        self.assertRaises(ParseException, lambda: Parser().parse(tokenize(input), actions))
+        self.assertRaises(ParseException, lambda: Parser(tokenize(input)).parse(actions))
 
     def test_(self):
         self.check(1, "1")
@@ -74,7 +74,7 @@ else:
     while True:
         try:
             program = raw_input("> ")
-            print repr(Parser().parse(tokenize(program), actions).next())
+            print repr(Parser(tokenize(program)).parse(actions).next())
         except EOFError:
             print("")
             exit(0)
