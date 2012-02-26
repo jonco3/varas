@@ -265,7 +265,7 @@ class Parser:
         """
         result = self.opt(tok)
         if not result:
-            raise ParseException(self.token, 'Expected %s' % tok)
+            raise ParseException(self.token, 'Expected token %s but found %s' % (repr(tok), repr(self.token[0])))
         return result
 
     def expression(self, actions, bind_right = 0):
