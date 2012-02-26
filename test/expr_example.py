@@ -20,17 +20,17 @@ def tokenize(program):
 
     yield Parser.END_TOKEN, None
 
-def handle_lparen(parser, content):
-    expr = parser.expression()
+def handle_lparen(parser, actions, content):
+    expr = parser.expression(actions)
     parser.match(")")
     return expr
 
-def handle_lsquare(parser, content):
+def handle_lsquare(parser, actions, content):
     result = []
     while not parser.opt("]"):
         if result:
             parser.match(",")
-        result.append(parser.expression())
+        result.append(parser.expression(actions))
     return ("list", result)
 
 def ident(x): 
