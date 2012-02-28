@@ -1,3 +1,4 @@
+Pass token to binary op handler so we can use it in error messages
 Rename ActionMap - ExpressionSpec? MatchSpec?
 Reinstate simple tokeniser for example code
 Upload to github

@@ -55,7 +55,7 @@ class ActionMap:
         """
         token_type = token[0]
         if token_type not in self.prefix_actions:
-            raise ParseException(token, "Bad prefix operator in this context")
+            raise ParseException(token, "Bad prefix operator %s in this context" % repr(token_type))
         handler = self.prefix_actions[token_type]
         return handler(parser, self, token)
 
@@ -79,7 +79,7 @@ class ActionMap:
         """
         token_type = token[0]
         if token_type not in self.infix_actions:
-            raise ParseException(token, "Bad infix operator in this context")
+            raise ParseException(token, "Bad infix operator %s in this context" % repr(token_type))
         handler_func = self.infix_actions[token_type][1]
         return handler_func(parser, self, token, left_value)
 
@@ -194,11 +194,15 @@ class Parser:
 
     token = None
     token_generator = None
+    token_stack = []
 
     def next_token(self):
         """Interal - consume a token from the input stream"""
         try:
-            self.token = self.token_generator.next()
+            if self.token_stack:
+                self.token = self.token_stack.pop(-1)
+            else:
+                self.token = self.token_generator.next()
         except StopIteration:
             raise ParseException(None, "Unexpected end of input")
 
@@ -254,6 +258,29 @@ class Parser:
         result = self.token
         self.next_token()
         return result
+
+    def opt2(self, tok1, tok2):
+        """
+        Call from token handlers to optionally consume two tokens from
+        the input stream.
+
+        tok1 -- the token type of the first token to match
+        tok2 -- the token type of the second token to match
+
+        Return a tuple of the content of the two tokens matched, or None
+        if they were not matched.
+        """
+        if self.token[0] != tok1:
+            return None
+        token1 = self.token
+        self.next_token()
+        if self.token[0] != tok2:
+            self.token_stack.append(self.token)
+            self.token = token1
+            return None
+        token2 = self.token
+        self.next_token()
+        return (token1, token2)
 
     def match(self, tok):
         """
