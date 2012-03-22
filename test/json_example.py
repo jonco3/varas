@@ -70,13 +70,13 @@ def handle_array(parser, actions, content):
     return result
 
 json = ActionMap()
-json.add_literal(LITERAL_STRING_TOKEN, handle_string)
-json.add_literal(LITERAL_NUMBER_TOKEN, handle_number) 
+json.add_word(LITERAL_STRING_TOKEN, handle_string)
+json.add_word(LITERAL_NUMBER_TOKEN, handle_number) 
 json.add_prefix_handler("{", handle_object)
 json.add_prefix_handler("[", handle_array)
-json.add_literal("true", lambda t: True)
-json.add_literal("false", lambda t: False)
-json.add_literal("null", lambda t: None)
+json.add_word("true", lambda t: True)
+json.add_word("false", lambda t: False)
+json.add_word("null", lambda t: None)
 
 import unittest
 

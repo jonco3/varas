@@ -38,7 +38,7 @@ def ident(x):
     return x
 
 actions = ActionMap()
-actions.add_literal(LITERAL_TOKEN, int)
+actions.add_word(LITERAL_TOKEN, int)
 actions.add_unary_op("+", ident)
 actions.add_unary_op("-", neg)
 actions.add_binary_op("+", 10, Assoc.LEFT, add)

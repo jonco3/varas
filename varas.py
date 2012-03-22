@@ -122,18 +122,19 @@ class ActionMap:
     # More convenient initialisation methods for use by client
     ##################################################################
 
-    def add_literal(self, token_type, handler_func):
+    def add_word(self, token_type, handler_func):
         """
-        Add a handler for literal tokens.
+        Add a handler for tokens that represent words of the grammar,
+        for example literal tokens or identifiers.
 
         token_type -- the token type to be handled
 
         handler_func -- a function to called with content of the token
         that returns the literal value.
         """
-        def literal_handler(parser, actions, token):
+        def word_handler(parser, actions, token):
             return handler_func(token[1])
-        self.add_prefix_handler(token_type, literal_handler)
+        self.add_prefix_handler(token_type, word_handler)
 
     def add_binary_op(self, token_type, bind_left, assoc, handler_func):
         """
