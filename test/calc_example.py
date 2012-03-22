@@ -55,7 +55,7 @@ class TestCalc(unittest.TestCase):
                          list(Parser(tokenize(input)).parse(actions)))
 
     def checkError(self, input):
-        self.assertRaises(ParseException, 
+        self.assertRaises(ParseError, 
                           list,
                           Parser(tokenize(input)).parse(actions))
 

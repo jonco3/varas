@@ -56,6 +56,30 @@ class Token:
         self.line_pos = line_pos
         self.column_pos = column_pos
 
+class ParseError(Exception):
+    """
+    Raised when an error occurs in parsing.  The exception has two
+    attributes:
+
+    token -- the token that was being parsed when the error occured
+
+    message -- a descriptive message
+    """
+    def __init__(self, token, message):
+        self.token = token
+        self.message = message
+
+    def __str__(self):
+        m = self.message
+        t = self.token
+        if t.filename:
+            m += " in " + t.filename
+        if t.line_pos:
+            m += " at line " + str(t.line_pos)
+            if t.column_pos:
+                m += " column " + str(t.column_pos)
+        return m
+
 class ActionMap:
     """
     Determines what action to take when a token is encountered in the
@@ -81,7 +105,7 @@ class ActionMap:
         """
         token_type = token.type
         if token_type not in self.prefix_actions:
-            raise ParseException(token, "Bad prefix operator %s in this context" % repr(token_type))
+            raise ParseError(token, "Bad prefix operator %s in this context" % repr(token_type))
         handler = self.prefix_actions[token_type]
         return handler(parser, self, token)
 
@@ -105,7 +129,7 @@ class ActionMap:
         """
         token_type = token.type
         if token_type not in self.infix_actions:
-            raise ParseException(token, "Bad infix operator %s in this context" % repr(token_type))
+            raise ParseError(token, "Bad infix operator %s in this context" % repr(token_type))
         handler_func = self.infix_actions[token_type][1]
         return handler_func(parser, self, token, left_value)
 
@@ -202,14 +226,6 @@ class ActionMap:
             return handler_func(token, right_value)
         self.add_prefix_handler(token_type, unary_handler)
 
-class ParseException(Exception):
-    def __init__(self, token, message):
-        self.token = token
-        self.message = message
-
-    def __str__(self):
-        return "%s at line %d column %d" % (self.message, self.token[2], self.token[3])
-
 class Parser:
     """
     Top down operator precedence parser.
@@ -225,13 +241,12 @@ class Parser:
 
     def next_token(self):
         """Interal - consume a token from the input stream"""
-        try:
-            if self.token_stack:
-                self.token = self.token_stack.pop(-1)
-            else:
-                self.token = self.token_generator.next()
-        except StopIteration:
-            raise ParseException(None, "Unexpected end of input")
+        if self.at_end():
+            raise ParseError(self.token, "Unexpected end of input")
+        if self.token_stack:
+            self.token = self.token_stack.pop(-1)
+        else:
+            self.token = self.token_generator.next()
 
     ##################################################################
     # Public interface
@@ -248,7 +263,7 @@ class Parser:
         token_content, token_line, token_column) tuples.
         """
         self.token_generator = token_generator
-        self.next_token()
+        self.token = token_generator.next()
 
     def at_end(self):
         """
@@ -329,7 +344,7 @@ class Parser:
         """
         result = self.opt(tok)
         if not result:
-            raise ParseException(self.token, 'Expected token %s but found %s' % (repr(tok), repr(self.token.type)))
+            raise ParseError(self.token, 'Expected token %s but found %s' % (repr(tok), repr(self.token.type)))
         return result
 
     def expression(self, actions, bind_right = 0):
