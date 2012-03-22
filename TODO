@@ -4,3 +4,9 @@ Reinstate simple tokeniser for example code
 Upload to github
 Convenience methods to handle parens and sequences
 Add positions in error messages
+Add try functionality:
+ - python context manager
+ - sets up array in parser where previous tokens are stored by next_token
+ - prev state of array stored
+ - on fail, prev tokens transfered to token_stack, and previous state restored
+ - can use to implement opt_n, but also opt expression parsing
