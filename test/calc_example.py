@@ -15,18 +15,18 @@ def tokenize(program):
 
     for number, operator in token_pat.findall(program):
         if number:
-            yield LITERAL_TOKEN, number
+            yield Token(LITERAL_TOKEN, number)
         else:
-            yield operator, operator
+            yield Token(operator, operator)
 
-    yield Parser.END_TOKEN, None
+    yield Token(Parser.END_TOKEN, None)
 
-def handle_lparen(parser, actions, content):
+def handle_lparen(parser, actions, token):
     expr = parser.expression(actions)
     parser.match(")")
     return expr
 
-def handle_lsquare(parser, actions, content):
+def handle_lsquare(parser, actions, token):
     result = []
     while not parser.opt("]"):
         if result:
@@ -34,18 +34,15 @@ def handle_lsquare(parser, actions, content):
         result.append(parser.expression(actions))
     return result
 
-def ident(x): 
-    return x
-
 actions = ActionMap()
-actions.add_word(LITERAL_TOKEN, int)
-actions.add_unary_op("+", ident)
-actions.add_unary_op("-", neg)
-actions.add_binary_op("+", 10, Assoc.LEFT, add)
-actions.add_binary_op("-", 10, Assoc.LEFT, sub)
-actions.add_binary_op("*", 20, Assoc.LEFT, mul)
-actions.add_binary_op("/", 20, Assoc.LEFT, div)
-actions.add_binary_op("^", 30, Assoc.RIGHT, pow)
+actions.add_word(LITERAL_TOKEN, lambda token: int(token.content))
+actions.add_unary_op("+", lambda token, right: right)
+actions.add_unary_op("-", lambda token, right: -right)
+actions.add_binary_op("+", 10, Assoc.LEFT, lambda t, l, r: l + r)
+actions.add_binary_op("-", 10, Assoc.LEFT, lambda t, l, r: l - r)
+actions.add_binary_op("*", 20, Assoc.LEFT, lambda t, l, r: l * r)
+actions.add_binary_op("/", 20, Assoc.LEFT, lambda t, l, r: l / r)
+actions.add_binary_op("^", 30, Assoc.RIGHT, lambda t, l, r: l ** r)
 actions.add_prefix_handler("(", handle_lparen)
 actions.add_prefix_handler("[", handle_lsquare)
 

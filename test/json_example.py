@@ -26,12 +26,12 @@ def tokenize(text):
             raise SyntaxError("Can't tokenize input %s at %d" % (text[pos], pos))
         pos += len(m.group(0))
         if m.group(1):
-            yield LITERAL_STRING_TOKEN, m.group(1)
+            yield Token(LITERAL_STRING_TOKEN, m.group(1))
         elif m.group(2):
-            yield LITERAL_NUMBER_TOKEN, m.group(2)
+            yield Token(LITERAL_NUMBER_TOKEN, m.group(2))
         else:
-            yield m.group(3), m.group(3)        
-    yield Parser.END_TOKEN, ""    
+            yield Token(m.group(3), m.group(3))
+    yield Token(Parser.END_TOKEN, "")
 
 def unescape_backslash(match):
     s = match.group(0)
@@ -41,27 +41,29 @@ def unescape_backslash(match):
         # lazy, exmaple code only!
         return eval('"' + s + '"')
 
-def handle_string(s):
+def handle_string(token):
+    s = token.content
     return re.sub(r"\\((u....)|.)", unescape_backslash, s[1:-1])
 
-def handle_number(s):
+def handle_number(token):
+    s = token.content
     if "." in s: 
         return float(s) 
     else: 
         return int(s)
 
-def handle_object(parser, actions, content):
+def handle_object(parser, actions, token):
     result = {}
     while not parser.opt("}"):
         if len(result):
             parser.match(",")
-        key = handle_string(parser.match(LITERAL_STRING_TOKEN)[1])
+        key = handle_string(parser.match(LITERAL_STRING_TOKEN))
         parser.match(":")
         value = parser.expression(actions)
         result[key] = value
     return result
 
-def handle_array(parser, actions, content):
+def handle_array(parser, actions, token):
     result = []
     while not parser.opt("]"):
         if result:
