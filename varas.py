@@ -85,12 +85,19 @@ class ActionMap:
     Determines what action to take when a token is encountered in the
     input stream.  This determines the expressions that can be parsed.
 
+    include -- optional, if specified then initialise the new action map
+    by including all the actions defined by this one
+
     Initialised by the client by calling the add_* methods.
     """
 
-    def __init__(self):
-        self.prefix_actions = {}
-        self.infix_actions = {}
+    def __init__(self, include = None):
+        if include:
+            self.prefix_actions = dict(include.prefix_actions)
+            self.infix_actions = dict(include.infix_actions)
+        else:
+            self.prefix_actions = {}
+            self.infix_actions = {}
     
     ##################################################################
     # Internal implementation
