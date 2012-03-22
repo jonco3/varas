@@ -116,7 +116,7 @@ class ActionMap:
         """
         token_type = token.type
         if token_type not in self.prefix_actions:
-            raise ParseError(token, "Unexpected %s in %s context" % (str(token_type), self.name))
+            raise ParseError(token, "Unexpected '%s' in %s context" % (str(token_type), self.name))
         handler = self.prefix_actions[token_type]
         return handler(parser, self, token)
 
