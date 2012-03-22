@@ -245,6 +245,16 @@ class Parser:
     # Token handler interface
     ##################################################################
 
+    def not_followed_by(self, tok):
+        """
+        Call from token handlers to determine whether the next token is not of a specified type.
+
+        tok -- the token type to test
+
+        Return whether the next token is not of the specified type.
+        """
+        return self.token[0] != tok
+
     def opt(self, tok):
         """
         Call from token handlers to optionally consume one token from the input stream.
@@ -253,7 +263,7 @@ class Parser:
 
         Return the token content or None if it was not matched.
         """
-        if self.token[0] != tok:
+        if self.not_followed_by(tok):
             return None
         result = self.token
         self.next_token()
