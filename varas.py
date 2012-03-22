@@ -76,7 +76,7 @@ class ParseError(Exception):
             m += " in " + t.filename
         if t.line_pos:
             m += " at line " + str(t.line_pos)
-            if t.column_pos:
+            if t.column_pos != None:
                 m += " column " + str(t.column_pos)
         return m
 
