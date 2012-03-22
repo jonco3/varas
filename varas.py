@@ -82,8 +82,11 @@ class ParseError(Exception):
 
 class ActionMap:
     """
-    Determines what action to take when a token is encountered in the
-    input stream.  This determines the expressions that can be parsed.
+    Specifies the expressions that can be parsed.  It is used to
+    determine what action to take when a token is encountered in the
+    input stream.
+
+    name -- optional, the name of the the context
 
     include -- optional, if specified then initialise the new action map
     by including all the actions defined by this one
@@ -91,7 +94,8 @@ class ActionMap:
     Initialised by the client by calling the add_* methods.
     """
 
-    def __init__(self, include = None):
+    def __init__(self, name = "this", include = None):
+        self.name = name
         if include:
             self.prefix_actions = dict(include.prefix_actions)
             self.infix_actions = dict(include.infix_actions)
@@ -112,7 +116,7 @@ class ActionMap:
         """
         token_type = token.type
         if token_type not in self.prefix_actions:
-            raise ParseError(token, "Bad prefix operator %s in this context" % repr(token_type))
+            raise ParseError(token, "Unexpected %s in %s context" % (str(token_type), self.name))
         handler = self.prefix_actions[token_type]
         return handler(parser, self, token)
 
@@ -136,7 +140,7 @@ class ActionMap:
         """
         token_type = token.type
         if token_type not in self.infix_actions:
-            raise ParseError(token, "Bad infix operator %s in this context" % repr(token_type))
+            raise ParseError(token, "Unexpected %s in %s context" % (str(token_type), self.name))
         handler_func = self.infix_actions[token_type][1]
         return handler_func(parser, self, token, left_value)
 
@@ -351,7 +355,7 @@ class Parser:
         """
         result = self.opt(tok)
         if not result:
-            raise ParseError(self.token, 'Expected token %s but found %s' % (repr(tok), repr(self.token.type)))
+            raise ParseError(self.token, 'Expected %s but found %s' % (str(tok), str(self.token.type)))
         return result
 
     def expression(self, actions, bind_right = 0):
