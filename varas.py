@@ -67,10 +67,10 @@ class ParseError(Exception):
     """
     def __init__(self, token, message):
         self.token = token
-        self.message = message
+        self.value = message
 
     def __str__(self):
-        m = self.message
+        m = self.value
         t = self.token
         if t.filename:
             m += " in " + t.filename
