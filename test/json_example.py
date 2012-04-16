@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Example JSON parser from spec at http://www.json.org/fatfree.html
 # JSON value is: string | number | object | array | true | false | null
 

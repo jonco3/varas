@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Example parser that generates an AST for an expression
 
 from varas import *

@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Example parser that calculates the result of an expression
 
 from varas import *
