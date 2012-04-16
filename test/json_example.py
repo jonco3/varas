@@ -131,16 +131,17 @@ class TestJson(unittest.TestCase):
             }
         self.check(expected, source)
 
-if len(sys.argv) > 1 and sys.argv[1] == "-t":
-    sys.argv.pop(1)
-    unittest.main()
-else:
-    while True:
-        try:
-            program = raw_input("> ")
-            print repr(Parser(tokenize(program)).parse(json).next())
-        except EOFError:
-            print("")
-            exit(0)
+if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == "-t":
+        sys.argv.pop(1)
+        unittest.main()
+    else:
+        while True:
+            try:
+                program = raw_input("> ")
+                print repr(Parser(tokenize(program)).parse(json).next())
+            except EOFError:
+                print("")
+                exit(0)
 
 

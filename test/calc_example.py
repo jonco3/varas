@@ -113,14 +113,15 @@ class TestCalc(unittest.TestCase):
         self.checkCount(1, "1")
         self.checkCount(2, "1 2 * 3")
 
-if len(sys.argv) > 1 and sys.argv[1] == "-t":
-    sys.argv.pop(1)
-    unittest.main()
-else:
-    while True:
-        try:
-            program = raw_input("> ")
-            print repr(Parser(tokenize(program)).parse(actions).next())
-        except EOFError:
-            print("")
-            exit(0)
+if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == "-t":
+        sys.argv.pop(1)
+        unittest.main()
+    else:
+        while True:
+            try:
+                program = raw_input("> ")
+                print repr(Parser(tokenize(program)).parse(actions).next())
+            except EOFError:
+                print("")
+                exit(0)
