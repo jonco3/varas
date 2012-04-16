@@ -1,6 +1,5 @@
 Upload to github
 Convenience methods to handle parens and sequences
-Add positions in error messages
 Add try functionality:
  - python context manager
  - sets up array in parser where previous tokens are stored by next_token
