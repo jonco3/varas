@@ -7,43 +7,34 @@ from varas import *
 import sys
 import re
 
-LITERAL_STRING_TOKEN = 1
-LITERAL_NUMBER_TOKEN = 2
+STRING_TOKEN = 1
+NUMBER_TOKEN = 2
 
-string_pattern = r"\"(?:[^\"\\]|(?:\\u[A-Fa-f0-9]{4})|(?:\\[\"\\/bfnrt]))*\""
-number_pattern = r"-?(?:0|(?:[1-9]\d*))(?:\.\d*)?(?:eE[+-]?\d*)?"
-operator_pattern = r"[{:,}\[\]]|true|false|null"
+tokenizer = Tokenizer(
+    (r"\"(?:[^\"\\]|(?:\\u[A-Fa-f0-9]{4})|(?:\\[\"\\/bfnrt]))*\"", STRING_TOKEN),
+    (r"-?(?:0|(?:[1-9]\d*))(?:\.\d*)?(?:eE[+-]?\d*)?",             NUMBER_TOKEN),
+    (r"[{:,}\[\]]|true|false|null",                                None))
 
-pattern = re.compile("\s*(?:(%s)|(%s)|(%s))" % 
-                     (string_pattern, number_pattern, operator_pattern))
-
-def tokenize(text):
-    pos = 0
-    length = len(text)
-    while pos < length:
-        m = pattern.match(text, pos)
-        if not m:
-            raise SyntaxError("Can't tokenize input %s at %d" % (text[pos], pos))
-        pos += len(m.group(0))
-        if m.group(1):
-            yield Token(LITERAL_STRING_TOKEN, m.group(1))
-        elif m.group(2):
-            yield Token(LITERAL_NUMBER_TOKEN, m.group(2))
-        else:
-            yield Token(m.group(3), m.group(3))
-    yield Token(Parser.END_TOKEN, "")
-
-def unescape_backslash(match):
-    s = match.group(0)
-    if s == "\\/":
-        return "/"
-    else:
-        # lazy, exmaple code only!
-        return eval('"' + s + '"')
+string_escapes = {
+    '"':  '"',
+    '\\': '\\',
+    '/':  '/',
+    'b':  '\b',
+    'f':  '\f',
+    'n':  '\n',
+    'r':  '\r',
+    't':  '\t' }
 
 def handle_string(token):
-    s = token.content
-    return re.sub(r"\\((u....)|.)", unescape_backslash, s[1:-1])
+    def unescape_backslash(match):
+        s = match.group(1)
+        if s[0] == 'u':
+            return chr(int(s[1:]))
+        else:
+            return string_escapes[s]
+        
+    s = token.content[1:-1]
+    return re.sub(r"\\((u....)|.)", unescape_backslash, s)
 
 def handle_number(token):
     s = token.content
@@ -52,45 +43,46 @@ def handle_number(token):
     else: 
         return int(s)
 
-def handle_object(parser, actions, token):
+def handle_object(parser, expr_spec, token):
     result = {}
     while not parser.opt("}"):
         if len(result):
             parser.match(",")
-        key = handle_string(parser.match(LITERAL_STRING_TOKEN))
+        key = handle_string(parser.match(STRING_TOKEN))
         parser.match(":")
-        value = parser.expression(actions)
+        value = parser.expression(expr_spec)
         result[key] = value
     return result
 
-def handle_array(parser, actions, token):
+def handle_array(parser, expr_spec, token):
     result = []
     while not parser.opt("]"):
         if result:
             parser.match(",")
-        result.append(parser.expression(actions))
+        result.append(parser.expression(expr_spec))
     return result
 
-json = ActionMap()
-json.add_word(LITERAL_STRING_TOKEN, handle_string)
-json.add_word(LITERAL_NUMBER_TOKEN, handle_number) 
+json = ExprSpec()
+json.add_word(STRING_TOKEN, handle_string)
+json.add_word(NUMBER_TOKEN, handle_number) 
 json.add_prefix_handler("{", handle_object)
 json.add_prefix_handler("[", handle_array)
 json.add_word("true", lambda t: True)
 json.add_word("false", lambda t: False)
 json.add_word("null", lambda t: None)
 
+def parse_expr(input):
+    return list(Parser(tokenizer.tokenize(input)).parse(json))
+
 import unittest
 
 class TestJson(unittest.TestCase):
 
     def check(self, expected, input):
-        self.assertEqual([expected], 
-                         list(Parser(tokenize(input)).parse(json)))
+        self.assertEqual([expected], parse_expr(input))
 
     def checkError(self, input):
-        self.assertRaises(ParseException, 
-                          lambda: list(Parser(tokenize(input)).parse(json)))
+        self.assertRaises(ParseError, parse_expr, input)
 
     def test_string(self):
         self.check("", '""')
@@ -139,7 +131,8 @@ if __name__ == '__main__':
         while True:
             try:
                 program = raw_input("> ")
-                print repr(Parser(tokenize(program)).parse(json).next())
+                for result in parse_expr(program):
+                    print(repr(result))
             except EOFError:
                 print("")
                 exit(0)

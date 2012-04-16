@@ -9,17 +9,8 @@ import re
 
 LITERAL_TOKEN = 1
 
-token_pat = re.compile("\s*(?:(\d+)|(.))")
-
-def tokenize(program):
-
-    for number, operator in token_pat.findall(program):
-        if number:
-            yield Token(LITERAL_TOKEN, number)
-        else:
-            yield Token(operator, operator)
-
-    yield Token(Parser.END_TOKEN, None)
+tokenizer = Tokenizer(("\d+", LITERAL_TOKEN),
+                      (".",   None))
 
 def handle_lparen(parser, actions, token):
     expr = parser.expression(actions)
@@ -34,30 +25,30 @@ def handle_lsquare(parser, actions, token):
         result.append(parser.expression(actions))
     return result
 
-actions = ActionMap()
-actions.add_word(LITERAL_TOKEN, lambda token: int(token.content))
-actions.add_unary_op("+", lambda token, right: right)
-actions.add_unary_op("-", lambda token, right: -right)
-actions.add_binary_op("+", 10, Assoc.LEFT, lambda t, l, r: l + r)
-actions.add_binary_op("-", 10, Assoc.LEFT, lambda t, l, r: l - r)
-actions.add_binary_op("*", 20, Assoc.LEFT, lambda t, l, r: l * r)
-actions.add_binary_op("/", 20, Assoc.LEFT, lambda t, l, r: l / r)
-actions.add_binary_op("^", 30, Assoc.RIGHT, lambda t, l, r: l ** r)
-actions.add_prefix_handler("(", handle_lparen)
-actions.add_prefix_handler("[", handle_lsquare)
+expr_spec = ExprSpec()
+expr_spec.add_word(LITERAL_TOKEN, lambda token: int(token.content))
+expr_spec.add_unary_op("+", lambda token, right: right)
+expr_spec.add_unary_op("-", lambda token, right: -right)
+expr_spec.add_binary_op("+", 10, Assoc.LEFT, lambda t, l, r: l + r)
+expr_spec.add_binary_op("-", 10, Assoc.LEFT, lambda t, l, r: l - r)
+expr_spec.add_binary_op("*", 20, Assoc.LEFT, lambda t, l, r: l * r)
+expr_spec.add_binary_op("/", 20, Assoc.LEFT, lambda t, l, r: l / r)
+expr_spec.add_binary_op("^", 30, Assoc.RIGHT, lambda t, l, r: l ** r)
+expr_spec.add_prefix_handler("(", handle_lparen)
+expr_spec.add_prefix_handler("[", handle_lsquare)
+
+def parse_expr(input):
+    return list(Parser(tokenizer.tokenize(input)).parse(expr_spec))
 
 import unittest
 
 class TestCalc(unittest.TestCase):
 
     def check(self, expected, input):
-        self.assertEqual([expected], 
-                         list(Parser(tokenize(input)).parse(actions)))
+        self.assertEqual([expected], parse_expr(input))
 
     def checkError(self, input):
-        self.assertRaises(ParseError, 
-                          list,
-                          Parser(tokenize(input)).parse(actions))
+        self.assertRaises(ParseError, parse_expr, input)
 
     def test_number(self):
         self.check(1, "1")
@@ -103,10 +94,10 @@ class TestCalc(unittest.TestCase):
         self.checkError("1 +")
 
     def checkCount(self, expected, input):
-        p = Parser(tokenize(input))
+        p = Parser(tokenizer.tokenize(input))
         for i in range(expected):
             self.assertFalse(p.at_end())
-            e = p.expression(actions)
+            e = p.expression(expr_spec)
         self.assertTrue(p.at_end())
 
     def test_multiple(self):
@@ -121,7 +112,8 @@ if __name__ == '__main__':
         while True:
             try:
                 program = raw_input("> ")
-                print repr(Parser(tokenize(program)).parse(actions).next())
+                for result in parse_expr(program):
+                    print(repr(result))
             except EOFError:
                 print("")
                 exit(0)

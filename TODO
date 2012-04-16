@@ -1,5 +1,3 @@
-Rename ActionMap - ExpressionSpec? MatchSpec?
-Reinstate simple tokeniser for example code
 Upload to github
 Convenience methods to handle parens and sequences
 Add positions in error messages

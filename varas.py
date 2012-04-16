@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import re
+
 """
 Top-down operator precendence parser library.
 
@@ -15,14 +17,14 @@ Concepts:
  - token: a tuple of (token_type, token_content, token_line,
    token_column).  token_conent is the text content of the token.
 
- - action map: used to map token types to handler functions called when
-   the token is encountered.
+ - expression spec: an object used to map token types to handler
+   functions called when the token is encountered.
 """
 
 class Assoc:
     """
     Defines constants for left/right associative binary oprators, used
-    by ActionMap.add_binary_op().
+    by ExprSpec.add_binary_op().
 
     The values are added to the operator precedence value to obtain the
     final right binding power - do not change the values.
@@ -56,6 +58,65 @@ class Token:
         self.line_pos = line_pos
         self.column_pos = column_pos
 
+class Tokenizer:
+    """
+    A example tokenizer class which uses regular expressions to match
+    tokens.
+
+    This is intended for ease of use rather than efficiency.
+    """
+
+    whitespace_pattern = re.compile("\s*")
+
+    def __init__(self, *token_defs):
+        """
+        Create a tokenizer object passing a list of (regexp_pattern,
+        token_type) tuples.
+
+        token_type is passed back from the tokenize generator to
+        indicate the token type found, and regexp_pattern is the regular
+        expression string used to match that token type.
+
+        If token_type is None, the matched string is passed as the token
+        type - this is useful for operators.
+        """
+
+        self.token_types = []
+        for regexp_pattern, token_type in token_defs:
+            self.token_types.append( (re.compile(regexp_pattern), token_type) )
+    
+    def tokenize(self, text):
+        """
+        Generator function taking input text and returning a sequence of
+        Token objects.
+        """
+        pos = 0
+        length = len(text)
+        while pos < length:
+
+            # skip any whitespace
+            m = Tokenizer.whitespace_pattern.match(text, pos)
+            if m:
+                pos += len(m.group(0))
+
+            # attempt to match token types
+            matched = False
+            for regexp, token_type in self.token_types:
+                m = regexp.match(text, pos)
+                if m:
+                    matched = True
+                    match = m.group(0)
+                    pos += len(match)
+                    if token_type == None:
+                        token_type = match
+                    yield Token(token_type, match)
+                    break
+
+            if not matched:
+                raise SyntaxError("Can't tokenize input")
+            
+        yield Token(Parser.END_TOKEN, "")
+
 class ParseError(Exception):
     """
     Raised when an error occurs in parsing.  The exception has two
@@ -80,7 +141,7 @@ class ParseError(Exception):
                 m += " column " + str(t.column_pos)
         return m
 
-class ActionMap:
+class ExprSpec:
     """
     Specifies the expressions that can be parsed.  It is used to
     determine what action to take when a token is encountered in the
@@ -88,7 +149,7 @@ class ActionMap:
 
     name -- optional, the name of the the context
 
-    include -- optional, if specified then initialise the new action map
+    include -- optional, if specified then initialise the new object by
     by including all the actions defined by this one
 
     Initialised by the client by calling the add_* methods.
@@ -156,7 +217,7 @@ class ActionMap:
         token_type -- the token type to be handled
 
         handler_func -- a function called when the token is found, with
-        the following arguments: parser, action map, token.
+        the following arguments: parser, expression spec, token.
         """
         assert token_type not in self.prefix_actions
         self.prefix_actions[token_type] = handler_func
@@ -172,7 +233,7 @@ class ActionMap:
         multiple of two
 
         handler_func -- a function called when the token is found,with
-        the following arguments: parser, action map, token, value of the
+        the following arguments: parser, expression spec, token, value of the
         left hand side of the expression.
         """
         assert token_type not in self.infix_actions
@@ -193,7 +254,7 @@ class ActionMap:
         handler_func -- a function which is called with token object,
         and that returns the literal value.
         """
-        def word_handler(parser, actions, token):
+        def word_handler(parser, expr_spec, token):
             return handler_func(token)
         self.add_prefix_handler(token_type, word_handler)
 
@@ -217,8 +278,8 @@ class ActionMap:
         # associativity, hence why left binding power must be a multiple
         # of two
         bind_right = bind_left + assoc
-        def binary_handler(parser, actions, token, left_value):
-            right_value = parser.expression(actions, bind_right)
+        def binary_handler(parser, expr_spec, token, left_value):
+            right_value = parser.expression(expr_spec, bind_right)
             return handler_func(token, left_value, right_value)
         self.add_infix_handler(token_type, bind_left, binary_handler)
     
@@ -232,8 +293,8 @@ class ActionMap:
         expression.  It is called with the following arguments: token,
         value of right subexpression.
         """
-        def unary_handler(parser, actions, token):
-            right_value = parser.expression(actions, 100)
+        def unary_handler(parser, expr_spec, token):
+            right_value = parser.expression(expr_spec, 100)
             return handler_func(token, right_value)
         self.add_prefix_handler(token_type, unary_handler)
 
@@ -282,17 +343,17 @@ class Parser:
         """
         return self.token.type == Parser.END_TOKEN
 
-    def parse(self, actions):
+    def parse(self, expr_spec):
         """
         A generator that parse a stream of tokens
-        according to a set of actions and yields the results.  Multiple
+        according to an expression spec and yields the results.  Multiple
         expressions are parsed until all tokens are consumed.
 
-        actions -- an ActionMap used to determine what action to take
+        expr_spec -- an ExprSpec used to determine what action to take
         when encountering each token.
         """
         while not self.at_end():
-            yield self.expression(actions)
+            yield self.expression(expr_spec)
 
     ##################################################################
     # Token handler interface
@@ -358,11 +419,11 @@ class Parser:
             raise ParseError(self.token, 'Expected %s but found %s' % (str(tok), str(self.token.type)))
         return result
 
-    def expression(self, actions, bind_right = 0):
+    def expression(self, expr_spec, bind_right = 0):
         """
         Call from token handlers to parse an expression from the input stream.
 
-        actions - the action map to use
+        expr_spec - the expression spec to use
 
         bind_right -- right binding power used to resolve operator precedence
 
@@ -370,9 +431,9 @@ class Parser:
         """
         t = self.token
         self.next_token()
-        left = actions.prefix(self, t)
-        while bind_right < actions.get_bind_left(self.token):
+        left = expr_spec.prefix(self, t)
+        while bind_right < expr_spec.get_bind_left(self.token):
             t = self.token
             self.next_token()
-            left = actions.infix(self, t, left)
+            left = expr_spec.infix(self, t, left)
         return left
