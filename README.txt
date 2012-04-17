@@ -19,7 +19,10 @@ The source is available for download from github here:
 
   https://github.com/JonCoppeard/varas/downloads
 
-You can install it using python distutils:
+You can run the test code like this:
+
+  python run_tests.py
+
+And you can install it using python distutils in the normal way:
 
   $ python setup.py install
-
