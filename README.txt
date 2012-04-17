@@ -8,13 +8,18 @@ Pratt parsers (also known as top down operator precendence parsers) are
 simple to use and resonably efficent.  There are a few articles
 describing them on the web:
 
- - http://javascript.crockford.com/tdop/tdop.html
+  http://javascript.crockford.com/tdop/tdop.html
 
- - http://eli.thegreenplace.net/2010/01/02/top-down-operator-precedence-parsing/
+  http://eli.thegreenplace.net/2010/01/02/top-down-operator-precedence-parsing/
 
 Installation
 ------------
 
-Install using python distutils:
+The source is available for download from github here:
 
- $ python setup.py install
+  https://github.com/JonCoppeard/varas/downloads
+
+You can install it using python distutils:
+
+  $ python setup.py install
+
