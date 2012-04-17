@@ -1,5 +1,12 @@
+Todo
+----
+
 Upload to github
 Convenience methods to handle parens and sequences
+
+Future development ideas
+------------------------
+
 Add try functionality:
  - python context manager
  - sets up array in parser where previous tokens are stored by next_token
