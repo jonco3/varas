@@ -82,7 +82,7 @@ class Tokenizer:
         self.token_types = []
         for regexp_pattern, token_type in token_defs:
             self.token_types.append( (re.compile(regexp_pattern), token_type) )
-    
+
     def tokenize(self, text):
         """
         Generator function taking input text and returning a sequence of
@@ -112,7 +112,7 @@ class Tokenizer:
 
             if not matched:
                 raise SyntaxError("Can't tokenize input")
-            
+
         yield Token(Parser.END_TOKEN, "")
 
 class ParseError(Exception):
@@ -161,7 +161,7 @@ class ExprSpec:
         else:
             self.prefix_actions = {}
             self.infix_actions = {}
-    
+
     ##################################################################
     # Internal implementation
     ##################################################################
@@ -280,7 +280,7 @@ class ExprSpec:
             right_value = parser.expression(expr_spec, bind_right)
             return handler_func(token, left_value, right_value)
         self.add_infix_handler(token_type, bind_left, binary_handler)
-    
+
     def add_unary_op(self, token_type, handler_func):
         """
         Add a handler for a unary prefix operator.
@@ -300,7 +300,7 @@ class Parser:
     """
     Top down operator precedence parser.
     """
-    
+
     ##################################################################
     # Internal implementation
     ##################################################################
