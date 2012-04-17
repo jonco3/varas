@@ -1,3 +1,6 @@
+# Copyright (c) 2012 Jon Coppeard
+# See the file LICENSE for copying permission.
+
 import re
 
 """
