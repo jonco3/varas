@@ -6,7 +6,7 @@ setup(name = 'Varas',
       author = 'Jon Coppeard',
       author_email = 'jon@coppeard.net',
       py_modules = [ 'varas' ],
-      url = "https://github.com/JonCoppeard/varas"
+      url = "https://github.com/JonCoppeard/varas",
       classifiers = [
           "Programming Language :: Python",
           "Programming Language :: Python :: 3",
