@@ -319,7 +319,7 @@ class Parser:
         if self.token_stack:
             self.token = self.token_stack.pop(-1)
         else:
-            self.token = self.token_generator.next()
+            self.token = next(self.token_generator)
 
     ##################################################################
     # Public interface
@@ -336,7 +336,7 @@ class Parser:
         token_content, token_line, token_column) tuples.
         """
         self.token_generator = token_generator
-        self.token = token_generator.next()
+        self.token = next(token_generator)
 
     def at_end(self):
         """
