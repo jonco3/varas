@@ -1,0 +1,54 @@
+Tokeniser
+---------
+
+A tokenizer is created by calling the Tokenizer constructor with a list of token
+definitions.  If there are no token definitions the tokenizer will successfully
+tokenize an empty string, or one containing only whitespace, but nothing else:
+
+  >>> from varas import *
+  >>> empty = Tokenizer()
+
+  >>> list(empty.tokenize(""))
+  [Token(Parser.END_TOKEN, '')]
+
+  >>> list(empty.tokenize("  \n  "))
+  [Token(Parser.END_TOKEN, '')]
+
+Note that the tokenizer always includes a token of type Parser.END_TOKEN to
+indicate the end of the input has been reached.
+
+Attempting to parse anything other than whitespace will raise a SyntaxError:
+
+  >>> list(empty.tokenize("a"))
+  Traceback (most recent call last):
+  ...
+  SyntaxError: Can't tokenize input
+
+A more useful tokenizer might split its input into word and number tokens.  To
+do this we need to pass some token definitions to the constructor.  Each
+definition is passed as a tuple of (regular expression string, token type).
+
+The token type is a object that is used to indicate when a token of this type is
+encountered.  It can be any object.  Useful possibilities are a constant integer
+or string.  For example:
+
+  >>> WORD_TOKEN = "WORD"
+  >>> NUMBER_TOKEN = "NUM"
+  >>> tokenizer = Tokenizer( ("\d+", NUMBER_TOKEN),
+  ...                        ("\w+", WORD_TOKEN) )
+
+  >>> list(tokenizer.tokenize("one 2 three"))
+  [Token('WORD', 'one'), Token('NUM', '2'), Token('WORD', 'three'), Token(Parser.END_TOKEN, '')]
+
+If you have token type which only matches a fixed string -- for example
+an operators or keyword in a computer language -- it is helpful to have the
+token type be the string itself.  This is done by passing None as the token
+type, and this allows multiple token types to be set up with one regular
+expresion:
+
+  >>> keywords = Tokenizer( ("one|two|three|four", None) )
+  >>> list(keywords.tokenize("two four"))
+  [Token('two', 'two'), Token('four', 'four'), Token(Parser.END_TOKEN, '')]
+
+If you use strings to represent other token types, it's important to make sure
+they don't overlap with any keyword tokens produced like this.
