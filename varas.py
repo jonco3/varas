@@ -59,6 +59,13 @@ class Token:
         self.line_pos = line_pos
         self.column_pos = column_pos
 
+    def __repr__(self):
+        if self.type == Parser.END_TOKEN:
+            tt = "Parser.END_TOKEN"
+        else:
+            tt = repr(self.type)
+        return "Token(%s, %s)" % (tt, repr(self.content))
+
 class Tokenizer:
     """
     A example tokenizer class which uses regular expressions to match
@@ -99,6 +106,8 @@ class Tokenizer:
             m = Tokenizer.whitespace_pattern.match(text, pos)
             if m:
                 pos += len(m.group(0))
+                if pos == length:
+                    break
 
             # attempt to match token types
             matched = False
