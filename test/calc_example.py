@@ -1,7 +1,6 @@
 # Example parser that calculates the result of an expression
 
 from varas import *
-from operator import *
 import sys
 import re
 
