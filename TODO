@@ -1,7 +1,8 @@
 Todo
 ----
 
-Add examples to README
+Add features list and examples to README
+Allow tokenizer to act on files
 Convenience methods to handle parens and sequences
 
 Future development ideas
