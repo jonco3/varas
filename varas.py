@@ -68,13 +68,11 @@ class Token:
 
 class Tokenizer:
     """
-    A example tokenizer class which uses regular expressions to match
+    A customisable tokenizer class which uses regular expressions to match
     tokens.
-
-    This is intended for ease of use rather than efficiency.
     """
 
-    whitespace_pattern = re.compile("\s*")
+    whitespace_pattern = "\s*"
 
     def __init__(self, *token_defs):
         """
@@ -96,9 +94,11 @@ class Tokenizer:
         """
 
         assert len(token_defs) > 0, "No token definitions supplied"
-        pattern = "|".join(["(%s)" % token_def[0] for token_def in token_defs])
+        token_patterns = ["(%s)" % token_def[0] for token_def in token_defs]
+        pattern = "(%s)(?:%s)?" % (Tokenizer.whitespace_pattern,
+                                   "|".join(token_patterns))
         self.regexp = re.compile(pattern)
-        assert self.regexp.groups == len(token_defs)
+        assert self.regexp.groups == len(token_defs) + 1
         self.token_types = [token_def[1] for token_def in token_defs]
 
     def tokenize(self, text):
@@ -110,21 +110,21 @@ class Tokenizer:
         length = len(text)
         while pos < length:
 
-            # skip any whitespace
-            m = Tokenizer.whitespace_pattern.match(text, pos)
-            if m:
-                pos += len(m.group(0))
-                if pos == length:
-                    break
-
-            # attempt to match a token
             m = self.regexp.match(text, pos)
-            if not m:
-                raise SyntaxError("Can't tokenize input")
+            assert m
+
+            # skip whitespace and check for end
+            pos += len(m.group(1))
+            if pos == length:
+                break
+
+            # check to see if we matched a token
             group = m.lastindex
+            if group < 2:
+                raise SyntaxError("Can't tokenize input")
             match = m.group(group)
             pos += len(match)
-            token_type = self.token_types[group - 1]
+            token_type = self.token_types[group - 2]
             if token_type == None:
                 token_type = match
             yield Token(token_type, match)
