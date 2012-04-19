@@ -2,49 +2,56 @@ Tokeniser
 ---------
 
 A tokenizer is created by calling the Tokenizer constructor with a list of token
-definitions.  If there are no token definitions the tokenizer will successfully
-tokenize an empty string, or one containing only whitespace, but nothing else:
+definitions.  At least one token definition must be supplied:
 
   >>> from varas import *
   >>> empty = Tokenizer()
-
-  >>> list(empty.tokenize(""))
-  [Token(Parser.END_TOKEN, '')]
-
-  >>> list(empty.tokenize("  \n  "))
-  [Token(Parser.END_TOKEN, '')]
-
-Note that the tokenizer always includes a token of type Parser.END_TOKEN to
-indicate the end of the input has been reached.
-
-Attempting to parse anything other than whitespace will raise a SyntaxError:
-
-  >>> list(empty.tokenize("a"))
   Traceback (most recent call last):
   ...
-  SyntaxError: Can't tokenize input
+  AssertionError: No token definitions supplied
 
-A more useful tokenizer might split its input into word and number tokens.  To
-do this we need to pass some token definitions to the constructor.  Each
-definition is passed as a tuple of (regular expression string, token type).
-
+Each token definition is a tuple of (regular expression string, token type).
 The token type is a object that is used to indicate when a token of this type is
 encountered.  It can be any object.  Useful possibilities are a constant integer
-or string.  For example:
+or string.
+
+A tokenizer that splits its input into word and number tokens could be created
+like this:
 
   >>> WORD_TOKEN = "WORD"
   >>> NUMBER_TOKEN = "NUM"
   >>> tokenizer = Tokenizer( ("\d+", NUMBER_TOKEN),
   ...                        ("\w+", WORD_TOKEN) )
 
+Calling the tokenize() method returns a generator object, which in turn yields
+instances of Token().  The tokenizer always includes a token of type
+Parser.END_TOKEN at the end to indicate the end of the input has been reached.
+
+The tokenizer can be used like this:
+
   >>> list(tokenizer.tokenize("one 2 three"))
   [Token('WORD', 'one'), Token('NUM', '2'), Token('WORD', 'three'), Token(Parser.END_TOKEN, '')]
 
-If you have token type which only matches a fixed string -- for example
-an operators or keyword in a computer language -- it is helpful to have the
-token type be the string itself.  This is done by passing None as the token
-type, and this allows multiple token types to be set up with one regular
-expresion:
+Tokenizing an empty string, or one containing only whitespace yeilds only the
+end token:
+
+  >>> list(tokenizer.tokenize(""))
+  [Token(Parser.END_TOKEN, '')]
+
+  >>> list(tokenizer.tokenize("  \n  "))
+  [Token(Parser.END_TOKEN, '')]
+
+Attempting to parse invalid input will raise a SyntaxError:
+
+  >>> list(tokenizer.tokenize("one 2!!! three"))
+  Traceback (most recent call last):
+  ...
+  SyntaxError: Can't tokenize input
+
+For token types which only match a fixed string -- for example an operators or
+keyword in a computer language -- it is helpful to have the token type be the
+string itself.  This can be done by passing None as the token type, and this
+allows multiple token types to be set up with one token definition:
 
   >>> keywords = Tokenizer( ("one|two|three|four", None) )
   >>> list(keywords.tokenize("two four"))

@@ -85,13 +85,21 @@ class Tokenizer:
         indicate the token type found, and regexp_pattern is the regular
         expression string used to match that token type.
 
+        The regexp patterns may not contain any capturing groups (there
+        would be no point in using them as the match object is never
+        made available anywhere).
+
+        There must be at least one token definition.
+
         If token_type is None, the matched string is passed as the token
         type - this is useful for operators.
         """
 
-        self.token_types = []
-        for regexp_pattern, token_type in token_defs:
-            self.token_types.append( (re.compile(regexp_pattern), token_type) )
+        assert len(token_defs) > 0, "No token definitions supplied"
+        pattern = "|".join(["(%s)" % token_def[0] for token_def in token_defs])
+        self.regexp = re.compile(pattern)
+        assert self.regexp.groups == len(token_defs)
+        self.token_types = [token_def[1] for token_def in token_defs]
 
     def tokenize(self, text):
         """
@@ -109,21 +117,17 @@ class Tokenizer:
                 if pos == length:
                     break
 
-            # attempt to match token types
-            matched = False
-            for regexp, token_type in self.token_types:
-                m = regexp.match(text, pos)
-                if m:
-                    matched = True
-                    match = m.group(0)
-                    pos += len(match)
-                    if token_type == None:
-                        token_type = match
-                    yield Token(token_type, match)
-                    break
-
-            if not matched:
+            # attempt to match a token
+            m = self.regexp.match(text, pos)
+            if not m:
                 raise SyntaxError("Can't tokenize input")
+            group = m.lastindex
+            match = m.group(group)
+            pos += len(match)
+            token_type = self.token_types[group - 1]
+            if token_type == None:
+                token_type = match
+            yield Token(token_type, match)
 
         yield Token(Parser.END_TOKEN, "")
 
