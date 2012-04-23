@@ -41,12 +41,12 @@ end token:
   >>> list(tokenizer.tokenize("  \n  "))
   [Token(Parser.END_TOKEN, '')]
 
-Attempting to parse invalid input will raise a SyntaxError:
+Attempting to parse invalid input will raise a ParseError:
 
   >>> list(tokenizer.tokenize("one 2!!! three"))
   Traceback (most recent call last):
   ...
-  SyntaxError: Can't tokenize input
+  ParseError: Can't tokenize input at line 1 column 5
 
 For token types which only match a fixed string -- for example an operators or
 keyword in a computer language -- it is helpful to have the token type be the

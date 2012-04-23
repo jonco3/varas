@@ -1,8 +1,6 @@
 # Copyright (c) 2012 Jon Coppeard
 # See the file LICENSE for copying permission.
 
-import re
-
 """
 Top-down operator precendence parser library.
 
@@ -21,6 +19,9 @@ Concepts:
  - expression spec: an object used to map token types to handler
    functions called when the token is encountered.
 """
+
+import re
+from StringIO import StringIO
 
 class Assoc:
     """
@@ -66,6 +67,30 @@ class Token:
             tt = repr(self.type)
         return "Token(%s, %s)" % (tt, repr(self.content))
 
+class ParseError(Exception):
+    """
+    Raised when an error occurs in tokenizing or parsing.  The exception has two
+    attributes:
+
+    token -- the token that was being parsed when the error occured
+
+    value -- a descriptive message
+    """
+    def __init__(self, token, message):
+        self.token = token
+        self.value = message
+
+    def __str__(self):
+        m = self.value
+        t = self.token
+        if t.filename:
+            m += " in " + t.filename
+        if t.line_pos:
+            m += " at line " + str(t.line_pos)
+            if t.column_pos != None:
+                m += " column " + str(t.column_pos)
+        return m
+
 class Tokenizer:
     """
     A customisable tokenizer class which uses regular expressions to match
@@ -97,63 +122,58 @@ class Tokenizer:
         token_patterns = ["(%s)" % token_def[0] for token_def in token_defs]
         pattern = "(%s)(?:%s)?" % (Tokenizer.whitespace_pattern,
                                    "|".join(token_patterns))
-        self.regexp = re.compile(pattern)
-        assert self.regexp.groups == len(token_defs) + 1
+        self.token_regexp = re.compile(pattern)
+        assert self.token_regexp.groups == len(token_defs) + 1
+        self.blank_line_regexp = re.compile("^%s$" % Tokenizer.whitespace_pattern)
         self.token_types = [token_def[1] for token_def in token_defs]
 
     def tokenize(self, text):
         """
-        Generator function taking input text and returning a sequence of
-        Token objects.
+        Takes an input string and returns a generator which yields a
+        sequence of Token objects.
         """
-        pos = 0
-        length = len(text)
-        while pos < length:
 
-            m = self.regexp.match(text, pos)
-            assert m
+        return self.tokenize_file(StringIO(text))
 
-            # skip whitespace and check for end
-            pos += len(m.group(1))
-            if pos == length:
-                break
+    def tokenize_file(self, file_object):
+        """
+        Takes an open file object and returns a generator which yields a
+        sequence of Token objects.
+        """
 
-            # check to see if we matched a token
-            group = m.lastindex
-            if group < 2:
-                raise SyntaxError("Can't tokenize input")
-            match = m.group(group)
-            pos += len(match)
-            token_type = self.token_types[group - 2]
-            if token_type == None:
-                token_type = match
-            yield Token(token_type, match)
+        filename = getattr(file_object, 'name', None)
+        line_number = 0
+        for line in file_object:
+            line_number += 1
 
-        yield Token(Parser.END_TOKEN, "")
+            if self.blank_line_regexp.match(line):
+                continue
 
-class ParseError(Exception):
-    """
-    Raised when an error occurs in parsing.  The exception has two
-    attributes:
+            pos = 0
+            length = len(line)
+            while pos < length:
 
-    token -- the token that was being parsed when the error occured
+                m = self.token_regexp.match(line, pos)
+                assert m
 
-    message -- a descriptive message
-    """
-    def __init__(self, token, message):
-        self.token = token
-        self.value = message
+                # skip whitespace and check for end
+                pos += len(m.group(1))
+                if pos == length:
+                    break
 
-    def __str__(self):
-        m = self.value
-        t = self.token
-        if t.filename:
-            m += " in " + t.filename
-        if t.line_pos:
-            m += " at line " + str(t.line_pos)
-            if t.column_pos != None:
-                m += " column " + str(t.column_pos)
-        return m
+                # check to see if we matched a token
+                group = m.lastindex
+                if group < 2:
+                    dummy_token = Token(None, None, filename, line_number, pos)
+                    raise ParseError(dummy_token, "Can't tokenize input")
+                match = m.group(group)
+                pos += len(match)
+                token_type = self.token_types[group - 2]
+                if token_type == None:
+                    token_type = match
+                yield Token(token_type, match, filename, line_number, pos)
+
+        yield Token(Parser.END_TOKEN, "", filename, line_number + 1, 0)
 
 class ExprSpec:
     """
