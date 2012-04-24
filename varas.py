@@ -53,6 +53,10 @@ class Token:
     column_pos -- optional, the column number in the input file where
     the token was found
     """
+
+    """Token type representing the end of the token stream"""
+    END_TOKEN = -1
+
     def __init__(self, type, content, filename = None, line_pos = None, column_pos = None):
         self.type = type
         self.content = content
@@ -61,8 +65,8 @@ class Token:
         self.column_pos = column_pos
 
     def __repr__(self):
-        if self.type == Parser.END_TOKEN:
-            tt = "Parser.END_TOKEN"
+        if self.type == Token.END_TOKEN:
+            tt = "Token.END_TOKEN"
         else:
             tt = repr(self.type)
         return "Token(%s, %s)" % (tt, repr(self.content))
@@ -173,7 +177,7 @@ class Tokenizer:
                     token_type = match
                 yield Token(token_type, match, filename, line_number, pos)
 
-        yield Token(Parser.END_TOKEN, "", filename, line_number + 1, 0)
+        yield Token(Token.END_TOKEN, "", filename, line_number + 1, 0)
 
 class ExprSpec:
     """
@@ -354,9 +358,6 @@ class Parser:
     # Public interface
     ##################################################################
 
-    """Token type representing the end of the token stream"""
-    END_TOKEN = -1
-
     def __init__(self, token_generator):
         """
         Create a parser object.
@@ -372,7 +373,7 @@ class Parser:
         """
         Return whether the parser is at the end of the input stream
         """
-        return self.token.type == Parser.END_TOKEN
+        return self.token.type == Token.END_TOKEN
 
     def parse(self, expr_spec):
         """
