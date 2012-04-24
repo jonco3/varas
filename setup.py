@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name = 'Varas',
-      version = '1.0',
+      version = '1.1',
       description = 'Pratt parser framework',
       author = 'Jon Coppeard',
       author_email = 'jon@coppeard.net',
