@@ -39,6 +39,9 @@ numbers and mathematical operators.  Tokens are matched by regular expressions.
   >>> tok = Tokenizer( ("\d+", "NUMBER"),
   ...                  ("[-+*/^]", None) )
 
+  >>> list(tok.tokenize("2 + 3"))
+  [Token('NUMBER', '2'), Token('+', '+'), Token('NUMBER', '3'), Token(Token.END_TOKEN, '')]
+
 Next we set up an expression spec - this tells the parser what to do when it
 encounters tokens.
 
@@ -49,20 +52,40 @@ on the content of the token
 
   >>> expr.add_word("NUMBER", lambda token: int(token.content))
 
-To parse some input, we need to plug the parser and tokenizer together.  The
-tokenizer is used to create a generator which is passed to the Parser
-constructor along with the expression spec:
+To parse an expression and calculate the answer, we need to plug the parser and
+tokenizer together.  This is done by creating a Parser object which takes both
+the expression spec and a token generator.  We can then call the parse() method
+to actually parse the input:
 
-  >>> def parse(text):
+  >>> def calc(text):
   ...   return Parser(expr, tok.tokenize(text)).parse()
 
-Now we can check that this parses numbers:
+We can check that this parses numbers:
 
-  >>> parse("42")
+  >>> calc("42")
   42
 
+Operators for addition and subtraction can be added to the expression spec like
+this:
 
-  1>>> expr_spec.add_binary_op("+", 10, Assoc.LEFT,
-  1...                         lambda token, left, right: left + right)
-  1>>> expr_spec.add_binary_op("-", 10, Assoc.LEFT,
-  1...                         lambda token, left, right: left - right)
+  >>> expr.add_binary_op("+", 10, Assoc.LEFT,
+  ...                    lambda token, left, right: left + right)
+  >>> expr.add_binary_op("-", 10, Assoc.LEFT,
+  ...                    lambda token, left, right: left - right)
+
+This allows us to process simple expressions:
+
+  >>> calc("2 + 2")
+  4
+
+The number '10' in the lines above indicates the precedence of the operator.  To
+add multiplication and division operators, we need to set a higher
+precendence value to ensure the correct result:
+
+  >>> expr.add_binary_op("*", 20, Assoc.LEFT,
+  ...                    lambda token, left, right: left * right)
+  >>> expr.add_binary_op("/", 20, Assoc.LEFT,
+  ...                    lambda token, left, right: left / right)
+
+  >>> calc("1 + 2 * 3")
+  7
