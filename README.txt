@@ -39,16 +39,16 @@ numbers and mathematical operators.  Tokens are matched by regular expressions.
   >>> tok = Tokenizer( ("\d+", "NUMBER"),
   ...                  ("[-+*/^]", None) )
 
-  >>> list(tok.tokenize("2 + 3"))
-  [Token('NUMBER', '2'), Token('+', '+'), Token('NUMBER', '3'), Token(Token.END_TOKEN, '')]
+  >>> list(tok.tokenize("2 +"))
+  [Token('NUMBER', '2'), Token('+', '+'), Token(Token.END_TOKEN, '')]
 
-Next we set up an expression spec - this tells the parser what to do when it
+Next we set up an expression spec to tell the parser what to do when it
 encounters tokens.
 
   >>> expr = ExprSpec()
 
 To deal with number literals we add an action that just calls the int() function
-on the content of the token
+on the content of the token:
 
   >>> expr.add_word("NUMBER", lambda token: int(token.content))
 
@@ -89,3 +89,5 @@ precendence value to ensure the correct result:
 
   >>> calc("1 + 2 * 3")
   7
+
+A more detailed example can be found in the file test/calc_example.py.
