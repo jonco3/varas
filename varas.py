@@ -341,10 +341,6 @@ class Parser:
     # Internal implementation
     ##################################################################
 
-    token = None
-    token_generator = None
-    token_stack = []
-
     def next_token(self):
         """Interal - consume a token from the input stream"""
         if self.at_end():
@@ -368,6 +364,7 @@ class Parser:
         token_generator -- a generator yielding tokens, i.e. (token_type,
         token_content, token_line, token_column) tuples.
         """
+        self.token_stack = []
         self.token_generator = token_generator
         self.token = next(token_generator)
 
