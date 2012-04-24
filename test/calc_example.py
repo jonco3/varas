@@ -35,7 +35,7 @@ expr_spec.add_prefix_handler("(", handle_lparen)
 expr_spec.add_prefix_handler("[", handle_lsquare)
 
 def parse_expr(input):
-    return list(Parser(tokenizer.tokenize(input)).parse(expr_spec))
+    return list(Parser(expr_spec, tokenizer.tokenize(input)).parse_all())
 
 import unittest
 
@@ -91,10 +91,10 @@ class TestCalc(unittest.TestCase):
         self.checkError("1 +")
 
     def checkCount(self, expected, input):
-        p = Parser(tokenizer.tokenize(input))
+        p = Parser(expr_spec, tokenizer.tokenize(input))
         for i in range(expected):
             self.assertFalse(p.at_end())
-            e = p.expression(expr_spec)
+            e = p.parse()
         self.assertTrue(p.at_end())
 
     def test_multiple(self):

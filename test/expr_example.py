@@ -23,7 +23,7 @@ def handle_lsquare(parser, actions, token):
     return ("list", result)
 
 def parse_expr(input):
-    return list(Parser(tokenizer.tokenize(input)).parse(expr_spec))
+    return list(Parser(expr_spec, tokenizer.tokenize(input)).parse_all())
 
 expr_spec = ExprSpec()
 expr_spec.add_word(LITERAL_TOKEN, lambda t: int(t.content))
@@ -40,7 +40,7 @@ expr_spec.add_prefix_handler("[", handle_lsquare)
 import unittest
 
 class TestExpr(unittest.TestCase):
-    
+
     def check(self, expected, input):
         self.assertEqual([expected], parse_expr(input))
 

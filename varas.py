@@ -358,15 +358,19 @@ class Parser:
     # Public interface
     ##################################################################
 
-    def __init__(self, token_generator):
+    def __init__(self, expr_spec, token_generator):
         """
         Create a parser object.
+
+        expr_spec -- an ExprSpec used to determine what action to take
+        when encountering each token.
 
         token_generator -- a generator yielding tokens, i.e. (token_type,
         token_content, token_line, token_column) tuples.
         """
-        self.token_stack = []
+        self.main_expr_spec = expr_spec
         self.token_generator = token_generator
+        self.token_stack = []
         self.token = next(token_generator)
 
     def at_end(self):
@@ -375,17 +379,20 @@ class Parser:
         """
         return self.token.type == Token.END_TOKEN
 
-    def parse(self, expr_spec):
+    def parse(self):
         """
-        A generator that parse a stream of tokens
+        Parse and return a single expression from the token stream.
+        """
+        return self.expression(self.main_expr_spec)
+
+    def parse_all(self):
+        """
+        Return a generator that parses the stream of tokens
         according to an expression spec and yields the results.  Multiple
         expressions are parsed until all tokens are consumed.
-
-        expr_spec -- an ExprSpec used to determine what action to take
-        when encountering each token.
         """
         while not self.at_end():
-            yield self.expression(expr_spec)
+            yield self.parse()
 
     ##################################################################
     # Token handler interface

@@ -30,15 +30,15 @@ def handle_string(token):
             return chr(int(s[1:]))
         else:
             return string_escapes[s]
-        
+
     s = token.content[1:-1]
     return re.sub(r"\\((u....)|.)", unescape_backslash, s)
 
 def handle_number(token):
     s = token.content
-    if "." in s: 
-        return float(s) 
-    else: 
+    if "." in s:
+        return float(s)
+    else:
         return int(s)
 
 def handle_object(parser, expr_spec, token):
@@ -62,7 +62,7 @@ def handle_array(parser, expr_spec, token):
 
 json = ExprSpec()
 json.add_word(STRING_TOKEN, handle_string)
-json.add_word(NUMBER_TOKEN, handle_number) 
+json.add_word(NUMBER_TOKEN, handle_number)
 json.add_prefix_handler("{", handle_object)
 json.add_prefix_handler("[", handle_array)
 json.add_word("true", lambda t: True)
@@ -70,7 +70,7 @@ json.add_word("false", lambda t: False)
 json.add_word("null", lambda t: None)
 
 def parse_expr(input):
-    return list(Parser(tokenizer.tokenize(input)).parse(json))
+    return list(Parser(json, tokenizer.tokenize(input)).parse_all())
 
 import unittest
 
@@ -97,24 +97,24 @@ class TestJson(unittest.TestCase):
     def test_object(self):
         source = r'''
         {
-            "name": "Jack (\"Bee\") Nimble", 
+            "name": "Jack (\"Bee\") Nimble",
             "format": {
-                "type":       "rect", 
-                "width":      1920, 
-                "height":     1080, 
-                "interlace":  false, 
+                "type":       "rect",
+                "width":      1920,
+                "height":     1080,
+                "interlace":  false,
                 "frame rate": 24,
                 "floating":   2.5
             }
         }'''
 
         expected = {
-            "name": "Jack (\"Bee\") Nimble", 
+            "name": "Jack (\"Bee\") Nimble",
             "format": {
-                "type":       "rect", 
-                "width":      1920, 
-                "height":     1080, 
-                "interlace":  False, 
+                "type":       "rect",
+                "width":      1920,
+                "height":     1080,
+                "interlace":  False,
                 "frame rate": 24,
                 "floating":   2.5
                 }
